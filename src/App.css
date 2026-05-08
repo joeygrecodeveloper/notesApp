@@ -61,6 +61,26 @@ html, body, #root {
   width: 100vw;
   overflow: hidden;
   background: var(--background);
+  position: relative;
+}
+
+.titlebar-drag-region {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 28px;
+  z-index: 9999;
+  background: transparent;
+}
+
+.titlebar-drag-region * {
+  pointer-events: none;
+}
+
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+  app-region: drag;
 }
 
 /* ── Sidebar ── */

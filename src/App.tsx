@@ -96,6 +96,7 @@ function App() {
 
   return (
     <div className="app">
+      <div className="titlebar-drag-region" data-tauri-drag-region />
       <Sidebar
         notes={notes}
         activeNoteId={activeNoteId}
