@@ -75,13 +75,13 @@ export const Arrow = Node.create({
   addInputRules() {
     return [
       new InputRule({
-        find: /->$/,
+        find: />>$/,
         handler: ({ state, range }) => {
           state.tr.replaceWith(range.from, range.to, this.type.create({ direction: 'right' }))
         },
       }),
       new InputRule({
-        find: /<-$/,
+        find: /<<$/,
         handler: ({ state, range }) => {
           state.tr.replaceWith(range.from, range.to, this.type.create({ direction: 'left' }))
         },
