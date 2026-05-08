@@ -11,7 +11,7 @@ const PAIRS: Record<string, string> = {
 };
 
 // Single quote after these chars signals a contraction or possessive — don't auto-pair.
-const CONTRACTION_CHARS = new Set(['I', 'n', 't', 's']);
+const CONTRACTION_CHARS = new Set(['I', 'n', 't', 's', 'e']);
 
 function charAt(doc: Node, pos: number): string {
   if (pos < 0 || pos >= doc.content.size) return '';
