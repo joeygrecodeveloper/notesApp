@@ -26,9 +26,9 @@ function buildSVG(direction: 'right' | 'left' | 'up' | 'down'): string {
     `<svg viewBox="0 0 40 16" width="2.2em" height="1em" fill="none" ` +
     `xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
     `<line x1="${shaftX1}" y1="8" x2="${shaftX2}" y2="8" ` +
-      `stroke="currentColor" stroke-width="1.875" stroke-linecap="round"/>` +
+      `stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>` +
     `<polyline points="${wingX},2 ${tipX},8 ${wingX},14" fill="none" ` +
-      `stroke="currentColor" stroke-width="1.875" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` +
     `</svg>`
   )
 }

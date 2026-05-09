@@ -267,7 +267,7 @@ body.dragging-note * {
 /* ── Editor area ── */
 .editor-area {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   background: var(--background);
   scrollbar-width: thin;
   scrollbar-color: hsl(210, 13%, 32%) transparent;
@@ -457,50 +457,60 @@ body.dragging-note * {
   text-underline-offset: 2px;
 }
 
-/* ── Arrow List Item ── */
+/* ── Arrow List ── */
 
-.editor-content .tiptap div.arrow-list-item {
+.editor-content .tiptap ul.arrow-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.editor-content .tiptap ul.arrow-list li {
   display: flex;
   align-items: flex-start;
   padding: 0.05em 0;
 }
 
-.editor-content .tiptap div.arrow-list-item::before {
+/* Right-arrow marker — display:block + flex:0 0 33px ensures fixed width from the first item */
+.editor-content .tiptap ul.arrow-list li::before {
   content: '';
-  flex-shrink: 0;
   display: block;
-  width: 2.2em;
+  flex: 0 0 33px;
+  width: 33px;
+  min-width: 33px;
   height: 1em;
   background-color: currentColor;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
-  /* nudge down to centre on first text line: (line-height 1.75 - 1em) / 2 = 0.375em */
   margin-top: 0.375em;
-  margin-right: 0.35em;
+  margin-right: 4px;
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
-  /* default: right-arrow for first item in a sequence */
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='1.875' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
-          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='1.875' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }
 
-/* Continuation item: L-shape connector — class set by ArrowList decoration plugin */
-.editor-content .tiptap div.arrow-list-item.arrow-list-item-continuation {
+/* Paragraph fills the remaining row so the cursor is always visible */
+.editor-content .tiptap ul.arrow-list li > p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Zero-width space on an empty paragraph ensures the browser paints a caret */
+.editor-content .tiptap ul.arrow-list li > p:empty::after {
+  content: '\200B';
+}
+
+/* Continuation items: L-shape marker + indentation — class set by ArrowList decoration plugin */
+.editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation {
   padding-left: 1.4em;
 }
 
-.editor-content .tiptap div.arrow-list-item.arrow-list-item-continuation::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='1.875' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
-          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='1.875' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+.editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }
-
-/* Indentation levels — 2.55em per step (marker width 2.2em + margin 0.35em) */
-.editor-content .tiptap div.arrow-list-item[data-indent="1"] { padding-left: 2.55em; }
-.editor-content .tiptap div.arrow-list-item[data-indent="2"] { padding-left: 5.1em; }
-.editor-content .tiptap div.arrow-list-item[data-indent="3"] { padding-left: 7.65em; }
-.editor-content .tiptap div.arrow-list-item[data-indent="4"] { padding-left: 10.2em; }
-.editor-content .tiptap div.arrow-list-item[data-indent="5"] { padding-left: 12.75em; }
-.editor-content .tiptap div.arrow-list-item[data-indent="6"] { padding-left: 15.3em; }

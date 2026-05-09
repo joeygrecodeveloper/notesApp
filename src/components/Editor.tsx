@@ -4,7 +4,7 @@ import Strike from '@tiptap/extension-strike';
 import Blockquote from '@tiptap/extension-blockquote';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AutoPair } from '../extensions/AutoPair';
-import { ArrowListItem } from '../extensions/ArrowList';
+import { ArrowList } from '../extensions/ArrowList';
 import { Arrow } from '../extensions/Arrow';
 import { CharacterColors } from '../extensions/CharacterColors';
 import { ClearFormattingOnEnter } from '../extensions/ClearFormattingOnEnter';
@@ -58,7 +58,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CustomStrike,
       CustomBlockquote,
       AutoPair,
-      ArrowListItem,
+      ArrowList,
       Arrow,
       CharacterColors,
       ClearFormattingOnEnter,
