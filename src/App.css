@@ -465,15 +465,14 @@ body.dragging-note * {
   margin: 0;
 }
 
-.editor-content .tiptap ul.arrow-list li {
+.editor-content .tiptap ul.arrow-list li.arrow-list-item {
   display: flex;
   align-items: flex-start;
   padding: 0.05em 0;
 }
 
-/* Right-arrow marker — display:block + flex:0 0 33px ensures fixed width from the first item */
-.editor-content .tiptap ul.arrow-list li::before {
-  content: '';
+/* Arrow marker span — always present in the DOM, so space is always reserved */
+.editor-content .tiptap ul.arrow-list .arrow-marker {
   display: block;
   flex: 0 0 33px;
   width: 33px;
@@ -493,15 +492,18 @@ body.dragging-note * {
           mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }
 
-/* Paragraph fills the remaining row so the cursor is always visible */
-.editor-content .tiptap ul.arrow-list li > p {
+/* Content div fills the remaining row */
+.editor-content .tiptap ul.arrow-list .arrow-content {
   flex: 1;
   min-width: 0;
+}
+
+.editor-content .tiptap ul.arrow-list .arrow-content > p {
   margin: 0;
 }
 
 /* Zero-width space on an empty paragraph ensures the browser paints a caret */
-.editor-content .tiptap ul.arrow-list li > p:empty::after {
+.editor-content .tiptap ul.arrow-list .arrow-content > p:empty::after {
   content: '\200B';
 }
 
@@ -510,7 +512,7 @@ body.dragging-note * {
   padding-left: 1.4em;
 }
 
-.editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation::before {
+.editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation .arrow-marker {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
           mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }

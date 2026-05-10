@@ -64,6 +64,7 @@ export const Arrow = Node.create({
       const dom = document.createElement('span')
       dom.setAttribute('contenteditable', 'false')
       dom.setAttribute('data-arrow', '')
+      dom.setAttribute('data-direction', node.attrs.direction as string)
       dom.style.cssText =
         'display:inline-block;line-height:0;vertical-align:middle;' +
         'user-select:none;-webkit-user-select:none;pointer-events:none'
@@ -75,7 +76,12 @@ export const Arrow = Node.create({
   addInputRules() {
     return [
       new InputRule({
-        find: />>$/,
+        // Skip when >> is the entire paragraph (ArrowList handles that case).
+        // Return index pointing at just ">>" so range covers only those 2 chars.
+        find: (text) => {
+          if (!text.endsWith('>>') || text === '>>') return null
+          return { index: text.length - 2, text: '>>' }
+        },
         handler: ({ state, range }) => {
           state.tr.replaceWith(range.from, range.to, this.type.create({ direction: 'right' }))
         },

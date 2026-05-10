@@ -1,11 +1,45 @@
-import { Node, mergeAttributes } from '@tiptap/core'
+import { Node, mergeAttributes, InputRule } from '@tiptap/core'
 import { TextSelection, Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+
+const ArrowListItem = Node.create({
+  name: 'arrowListItem',
+  content: 'paragraph+',
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'li.arrow-list-item' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['li', mergeAttributes(HTMLAttributes, { class: 'arrow-list-item' }), 0]
+  },
+
+  addNodeView() {
+    return () => {
+      const li = document.createElement('li')
+      li.className = 'arrow-list-item'
+
+      const marker = document.createElement('span')
+      marker.className = 'arrow-marker'
+      marker.setAttribute('contenteditable', 'false')
+      marker.setAttribute('aria-hidden', 'true')
+
+      const content = document.createElement('div')
+      content.className = 'arrow-content'
+
+      li.appendChild(marker)
+      li.appendChild(content)
+
+      return { dom: li, contentDOM: content }
+    }
+  },
+})
 
 export const ArrowList = Node.create({
   name: 'arrowList',
   group: 'block',
-  content: 'listItem+',
+  content: 'arrowListItem+',
 
   parseHTML() {
     return [{ tag: 'ul[data-type="arrowList"]' }]
@@ -15,9 +49,40 @@ export const ArrowList = Node.create({
     return ['ul', mergeAttributes(HTMLAttributes, { 'data-type': 'arrowList', class: 'arrow-list' }), 0]
   },
 
+  addExtensions() {
+    return [ArrowListItem]
+  },
+
+  addInputRules() {
+    return [
+      new InputRule({
+        find: /^>>$/,
+        handler: ({ state, range }) => {
+          console.log('[ArrowList] InputRule fired')
+          const paraType          = this.editor.schema.nodes.paragraph
+          const arrowListItemType = this.editor.schema.nodes.arrowListItem
+          console.log('[ArrowList] InputRule — paragraph:', !!paraType, '| arrowListItem:', !!arrowListItemType)
+          if (!paraType || !arrowListItemType) return
+
+          const $from    = state.doc.resolve(range.from)
+          const nodeFrom = $from.before($from.depth)
+          const nodeTo   = $from.after($from.depth)
+
+          const item      = arrowListItemType.create(null, paraType.create(null))
+          const arrowList = this.type.create(null, [item])
+
+          state.tr.replaceWith(nodeFrom, nodeTo, arrowList)
+          // nodeFrom +1 (arrowList open) +1 (arrowListItem open) +1 (para open) = nodeFrom+3
+          state.tr.setSelection(TextSelection.create(state.tr.doc, nodeFrom + 3))
+          console.log('[ArrowList] InputRule — tr.doc after conversion:', JSON.stringify(state.tr.doc.toJSON()))
+        },
+      }),
+    ]
+  },
+
   addProseMirrorPlugins() {
     const arrowListName = this.name
-    const listItemName  = 'listItem'
+    const listItemName  = 'arrowListItem'
     return [
       new Plugin({
         props: {
@@ -29,11 +94,7 @@ export const ArrowList = Node.create({
               node.forEach((child, childOffset, index) => {
                 if (child.type.name !== listItemName) return
                 const absPos = offset + 1 + childOffset
-                if (index === 0) {
-                  console.log('[ArrowList] decoration | skipping first listItem at absPos:', absPos)
-                  return
-                }
-                console.log('[ArrowList] decoration | adding continuation to listItem index:', index, 'absPos:', absPos)
+                if (index === 0) return
                 decos.push(
                   Decoration.node(absPos, absPos + child.nodeSize, {
                     class: 'arrow-list-item-continuation',
@@ -50,100 +111,58 @@ export const ArrowList = Node.create({
 
   addKeyboardShortcuts() {
     return {
-      // Trigger: Enter on a paragraph whose first inline child is an arrow atom.
-      // Converts the paragraph to arrowList > listItem > paragraph, places the
-      // cursor at the split point, then calls splitListItem so TipTap's native
-      // command handles the actual split and cursor placement.
       Enter: () => {
         const { state, view } = this.editor
         const { $from, empty } = state.selection
         const firstChild = $from.parent.firstChild
 
-        // Logging-only branch: capture computed styles on the first li before and after
-        // Enter when we're already inside an arrowList listItem paragraph.
+        console.log('[ArrowList] Enter fired | parentType:', $from.parent.type.name)
+        console.log('[ArrowList] depth check | d0:', $from.node(0).type.name, '| d1:', $from.node(1)?.type.name, '| d2:', $from.node(2)?.type.name, '| d3:', $from.node(3)?.type.name)
+
         const insideArrowListItem =
           empty &&
           $from.parent.type.name === 'paragraph' &&
-          $from.node($from.depth - 1)?.type.name === 'listItem' &&
+          $from.node($from.depth - 1)?.type.name === 'arrowListItem' &&
           $from.node($from.depth - 2)?.type.name === this.name
 
         if (insideArrowListItem) {
-          const firstLi = this.editor.view.dom.querySelector('ul.arrow-list li:first-child')
-          if (firstLi) {
-            const cs = window.getComputedStyle(firstLi)
-            const beforeWidth = window.getComputedStyle(firstLi, '::before').width
-            const firstLiText = firstLi.querySelector('p') || firstLi.firstElementChild
-            console.log('[ArrowList] BEFORE Enter | li margin:', cs.margin, '| padding:', cs.padding, '| gap:', cs.gap, '| width:', cs.width)
-            console.log('[ArrowList] BEFORE Enter | li offsetLeft:', (firstLi as HTMLElement).offsetLeft, '| offsetWidth:', (firstLi as HTMLElement).offsetWidth)
-            console.log('[ArrowList] BEFORE Enter | ::before width:', beforeWidth, '| textNode offsetLeft:', (firstLiText as HTMLElement)?.offsetLeft)
-            Array.from(firstLi.children).forEach((child, i) => {
-              const ccs = window.getComputedStyle(child)
-              console.log(`[ArrowList] BEFORE Enter | li child[${i}] tag:${child.tagName} margin:${ccs.margin} padding:${ccs.padding} width:${ccs.width} offsetLeft:${(child as HTMLElement).offsetLeft}`)
-            })
-          }
+          const marker = document.querySelector('.arrow-list .arrow-marker') as HTMLElement
+          console.log('[ArrowList] marker offsetWidth BEFORE:', marker?.offsetWidth, '| marker offsetLeft:', marker?.offsetLeft)
+          const result = this.editor.commands.splitListItem('arrowListItem')
           requestAnimationFrame(() => {
-            const firstLiAfter = this.editor.view.dom.querySelector('ul.arrow-list li:first-child')
-            if (firstLiAfter) {
-              const cs = window.getComputedStyle(firstLiAfter)
-              const beforeWidth = window.getComputedStyle(firstLiAfter, '::before').width
-              const firstLiText = firstLiAfter.querySelector('p') || firstLiAfter.firstElementChild
-              console.log('[ArrowList] AFTER Enter | li margin:', cs.margin, '| padding:', cs.padding, '| gap:', cs.gap, '| width:', cs.width)
-              console.log('[ArrowList] AFTER Enter | li offsetLeft:', (firstLiAfter as HTMLElement).offsetLeft, '| offsetWidth:', (firstLiAfter as HTMLElement).offsetWidth)
-              console.log('[ArrowList] AFTER Enter | ::before width:', beforeWidth, '| textNode offsetLeft:', (firstLiText as HTMLElement)?.offsetLeft)
-              Array.from(firstLiAfter.children).forEach((child, i) => {
-                const ccs = window.getComputedStyle(child)
-                console.log(`[ArrowList] AFTER Enter | li child[${i}] tag:${child.tagName} margin:${ccs.margin} padding:${ccs.padding} width:${ccs.width} offsetLeft:${(child as HTMLElement).offsetLeft}`)
-              })
-            }
+            const markerAfter = document.querySelector('.arrow-list .arrow-marker') as HTMLElement
+            console.log('[ArrowList] marker offsetWidth AFTER:', markerAfter?.offsetWidth, '| marker offsetLeft:', markerAfter?.offsetLeft)
           })
-          return false  // let native splitListItem handle the actual split
+          return result
         }
 
+        // Backward-compat: convert paragraphs that still contain an inline Arrow node
+        // (notes saved before the InputRule approach was introduced)
         if (!empty || $from.parent.type.name !== 'paragraph' || firstChild?.type.name !== 'arrow' || firstChild?.attrs.direction !== 'right') {
           return false
         }
 
-        const paraType     = this.editor.schema.nodes.paragraph
-        const listItemType = this.editor.schema.nodes.listItem
-        if (!paraType || !listItemType) return false
+        const paraType          = this.editor.schema.nodes.paragraph
+        const arrowListItemType = this.editor.schema.nodes.arrowListItem
+        if (!paraType || !arrowListItemType) return false
 
-        const arrowSize = firstChild.nodeSize
-        const splitAt   = Math.max($from.parentOffset, arrowSize)
+        const arrowSize    = firstChild.nodeSize
+        const splitAt      = Math.max($from.parentOffset, arrowSize)
+        const beforeCursor = $from.parent.content.cut(arrowSize, splitAt)
+        const afterCursor  = $from.parent.content.cut(splitAt)
 
-        // Build arrowList > listItem > paragraph(full content minus arrow atom)
-        const fullContent = $from.parent.content.cut(arrowSize)
-        const para        = paraType.create(null, fullContent)
-        const item        = listItemType.create(null, para)
-        const arrowList   = this.type.create(null, item)
+        const item1     = arrowListItemType.create(null, paraType.create(null, beforeCursor))
+        const item2     = arrowListItemType.create(null, paraType.create(null, afterCursor))
+        const arrowList = this.type.create(null, [item1, item2])
 
-        const nodeFrom = $from.before()
-        const nodeTo   = $from.after()
-
-        // Cursor inside the new paragraph at the original split offset.
-        // +3 = arrowList open + listItem open + paragraph open
-        const splitPoint = nodeFrom + 3 + (splitAt - arrowSize)
-
-        const firstLi = document.querySelector('.arrow-list li:first-child')
-        const firstLiText = firstLi?.querySelector('p') || firstLi?.firstElementChild
-        const beforeWidthPre = firstLi ? window.getComputedStyle(firstLi, '::before').width : 'n/a'
-        console.log('[ArrowList] BEFORE Enter | firstLi offsetLeft:', firstLi?.offsetLeft, '| textNode offsetLeft:', (firstLiText as HTMLElement)?.offsetLeft, '| firstLi width:', firstLi?.getBoundingClientRect().width)
-        console.log('[ArrowList] BEFORE Enter | ::before width:', beforeWidthPre)
+        const nodeFrom  = $from.before()
+        const nodeTo    = $from.after()
+        const cursorPos = nodeFrom + item1.nodeSize + 3
 
         const tr = state.tr.replaceWith(nodeFrom, nodeTo, arrowList)
-        tr.setSelection(TextSelection.create(tr.doc, splitPoint))
+        tr.setSelection(TextSelection.create(tr.doc, cursorPos))
         tr.scrollIntoView()
         view.dispatch(tr)
-
-        requestAnimationFrame(() => {
-          const firstLiAfter = document.querySelector('.arrow-list li:first-child')
-          const firstLiTextAfter = firstLiAfter?.querySelector('p') || firstLiAfter?.firstElementChild
-          const beforeWidthPost = firstLiAfter ? window.getComputedStyle(firstLiAfter, '::before').width : 'n/a'
-          console.log('[ArrowList] AFTER Enter | firstLi offsetLeft:', firstLiAfter?.offsetLeft, '| textNode offsetLeft:', (firstLiTextAfter as HTMLElement)?.offsetLeft, '| firstLi width:', firstLiAfter?.getBoundingClientRect().width)
-          console.log('[ArrowList] AFTER Enter | ::before width:', beforeWidthPost)
-        })
-
-        // Cursor is now inside a normal paragraph — splitListItem works correctly here.
-        this.editor.commands.splitListItem('listItem')
         return true
       },
     }
