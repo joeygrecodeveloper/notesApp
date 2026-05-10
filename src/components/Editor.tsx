@@ -2,7 +2,9 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Strike from '@tiptap/extension-strike';
 import Blockquote from '@tiptap/extension-blockquote';
+import { Extension } from '@tiptap/core';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import type { Note } from '../types';
 import { AutoPair } from '../extensions/AutoPair';
 import { ArrowList } from '../extensions/ArrowList';
 import { Arrow } from '../extensions/Arrow';
@@ -29,7 +31,15 @@ const CustomStrike = Strike.extend({
     };
   },
 });
-import type { Note } from '../types';
+
+const DisableShiftEnter = Extension.create({
+  name: 'disableShiftEnter',
+  addKeyboardShortcuts() {
+    return {
+      'Shift-Enter': () => true,
+    };
+  },
+});
 
 interface EditorProps {
   note: Note;
@@ -55,9 +65,10 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ strike: false, blockquote: false }),
+      StarterKit.configure({ strike: false, blockquote: false, hardBreak: false }),
       CustomStrike,
       CustomBlockquote,
+      DisableShiftEnter,
       AutoPair,
       ArrowList,
       Arrow,
