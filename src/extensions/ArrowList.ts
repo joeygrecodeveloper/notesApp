@@ -7,6 +7,16 @@ const ArrowListItem = Node.create({
   content: 'paragraph+',
   defining: true,
 
+  addAttributes() {
+    return {
+      indent: {
+        default: 0,
+        parseHTML: el => parseInt(el.getAttribute('data-indent') ?? '0', 10),
+        renderHTML: attrs => ({ 'data-indent': attrs.indent }),
+      },
+    }
+  },
+
   parseHTML() {
     return [{ tag: 'li.arrow-list-item' }]
   },
@@ -16,9 +26,10 @@ const ArrowListItem = Node.create({
   },
 
   addNodeView() {
-    return () => {
+    return ({ node }) => {
       const li = document.createElement('li')
       li.className = 'arrow-list-item'
+      li.setAttribute('data-indent', String(node.attrs.indent ?? 0))
 
       const marker = document.createElement('span')
       marker.className = 'arrow-marker'
@@ -31,7 +42,15 @@ const ArrowListItem = Node.create({
       li.appendChild(marker)
       li.appendChild(content)
 
-      return { dom: li, contentDOM: content }
+      return {
+        dom: li,
+        contentDOM: content,
+        update(updatedNode) {
+          if (updatedNode.type !== node.type) return false
+          li.setAttribute('data-indent', String(updatedNode.attrs.indent ?? 0))
+          return true
+        },
+      }
     }
   },
 })
@@ -58,10 +77,8 @@ export const ArrowList = Node.create({
       new InputRule({
         find: /^>>$/,
         handler: ({ state, range }) => {
-          console.log('[ArrowList] InputRule fired')
           const paraType          = this.editor.schema.nodes.paragraph
           const arrowListItemType = this.editor.schema.nodes.arrowListItem
-          console.log('[ArrowList] InputRule — paragraph:', !!paraType, '| arrowListItem:', !!arrowListItemType)
           if (!paraType || !arrowListItemType) return
 
           const $from    = state.doc.resolve(range.from)
@@ -74,7 +91,6 @@ export const ArrowList = Node.create({
           state.tr.replaceWith(nodeFrom, nodeTo, arrowList)
           // nodeFrom +1 (arrowList open) +1 (arrowListItem open) +1 (para open) = nodeFrom+3
           state.tr.setSelection(TextSelection.create(state.tr.doc, nodeFrom + 3))
-          console.log('[ArrowList] InputRule — tr.doc after conversion:', JSON.stringify(state.tr.doc.toJSON()))
         },
       }),
     ]
@@ -110,30 +126,72 @@ export const ArrowList = Node.create({
   },
 
   addKeyboardShortcuts() {
+    const inArrowListItem = ($from: ReturnType<typeof this.editor.state.selection.$from>) =>
+      $from.parent.type.name === 'paragraph' &&
+      $from.node($from.depth - 1)?.type.name === 'arrowListItem' &&
+      $from.node($from.depth - 2)?.type.name === this.name
+
     return {
+      Tab: () => {
+        const { state, view } = this.editor
+        const { $from } = state.selection
+        if (!inArrowListItem($from)) return false
+
+        const item    = $from.node($from.depth - 1)
+        const itemPos = $from.before($from.depth - 1)
+        const indent  = (item.attrs.indent as number) ?? 0
+
+        view.dispatch(state.tr.setNodeMarkup(itemPos, null, { ...item.attrs, indent: indent + 1 }))
+        return true
+      },
+
+      'Shift-Tab': () => {
+        const { state, view } = this.editor
+        const { $from } = state.selection
+        if (!inArrowListItem($from)) return false
+
+        const item    = $from.node($from.depth - 1)
+        const itemPos = $from.before($from.depth - 1)
+        const indent  = (item.attrs.indent as number) ?? 0
+
+        if (indent <= 0) return true  // block browser default, but no-op
+
+        view.dispatch(state.tr.setNodeMarkup(itemPos, null, { ...item.attrs, indent: indent - 1 }))
+        return true
+      },
+
       Enter: () => {
         const { state, view } = this.editor
         const { $from, empty } = state.selection
         const firstChild = $from.parent.firstChild
 
-        console.log('[ArrowList] Enter fired | parentType:', $from.parent.type.name)
-        console.log('[ArrowList] depth check | d0:', $from.node(0).type.name, '| d1:', $from.node(1)?.type.name, '| d2:', $from.node(2)?.type.name, '| d3:', $from.node(3)?.type.name)
+        if (empty && inArrowListItem($from)) {
+          const item          = $from.node($from.depth - 1)
+          const currentIndent = (item.attrs.indent as number) ?? 0
 
-        const insideArrowListItem =
-          empty &&
-          $from.parent.type.name === 'paragraph' &&
-          $from.node($from.depth - 1)?.type.name === 'arrowListItem' &&
-          $from.node($from.depth - 2)?.type.name === this.name
+          // Double-Enter: empty item exits the list entirely
+          if ($from.parent.content.size === 0) {
+            return this.editor.commands.liftListItem('arrowListItem')
+          }
 
-        if (insideArrowListItem) {
-          const marker = document.querySelector('.arrow-list .arrow-marker') as HTMLElement
-          console.log('[ArrowList] marker offsetWidth BEFORE:', marker?.offsetWidth, '| marker offsetLeft:', marker?.offsetLeft)
-          const result = this.editor.commands.splitListItem('arrowListItem')
-          requestAnimationFrame(() => {
-            const markerAfter = document.querySelector('.arrow-list .arrow-marker') as HTMLElement
-            console.log('[ArrowList] marker offsetWidth AFTER:', markerAfter?.offsetWidth, '| marker offsetLeft:', markerAfter?.offsetLeft)
-          })
-          return result
+          const paraType          = this.editor.schema.nodes.paragraph
+          const arrowListItemType = this.editor.schema.nodes.arrowListItem
+          if (!paraType || !arrowListItemType) return false
+
+          const itemFrom      = $from.before($from.depth - 1)
+          const itemTo        = $from.after($from.depth - 1)
+          const beforeContent = $from.parent.content.cut(0, $from.parentOffset)
+          const afterContent  = $from.parent.content.cut($from.parentOffset)
+
+          const item1 = arrowListItemType.create({ indent: currentIndent }, paraType.create(null, beforeContent))
+          const item2 = arrowListItemType.create({ indent: currentIndent }, paraType.create(null, afterContent))
+
+          const tr = state.tr.replaceWith(itemFrom, itemTo, [item1, item2])
+          // itemFrom + item1.nodeSize = item2 open; +1 para2 open; +1 = para2 content start
+          tr.setSelection(TextSelection.create(tr.doc, itemFrom + item1.nodeSize + 2))
+          tr.scrollIntoView()
+          view.dispatch(tr)
+          return true
         }
 
         // Backward-compat: convert paragraphs that still contain an inline Arrow node

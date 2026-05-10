@@ -469,6 +469,7 @@ body.dragging-note * {
   display: flex;
   align-items: flex-start;
   padding: 0.05em 0;
+  --al-base: 0px;
 }
 
 /* Arrow marker span — always present in the DOM, so space is always reserved */
@@ -510,9 +511,21 @@ body.dragging-note * {
 /* Continuation items: L-shape marker + indentation — class set by ArrowList decoration plugin */
 .editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation {
   padding-left: 1.4em;
+  --al-base: 1.4em;
 }
 
 .editor-content .tiptap ul.arrow-list li.arrow-list-item-continuation .arrow-marker {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
           mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }
+
+/* ── Arrow List indent levels ── */
+/* Each level adds 24px on top of --al-base (0px for first item, 1.4em for continuations) */
+.editor-content .tiptap ul.arrow-list li[data-indent="1"] { padding-left: calc(var(--al-base) +  24px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="2"] { padding-left: calc(var(--al-base) +  48px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="3"] { padding-left: calc(var(--al-base) +  72px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="4"] { padding-left: calc(var(--al-base) +  96px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="5"] { padding-left: calc(var(--al-base) + 120px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="6"] { padding-left: calc(var(--al-base) + 144px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="7"] { padding-left: calc(var(--al-base) + 168px); }
+.editor-content .tiptap ul.arrow-list li[data-indent="8"] { padding-left: calc(var(--al-base) + 192px); }
