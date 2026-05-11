@@ -88,6 +88,12 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
     if (autoFocus && editor) editor.commands.focus('end');
   }, [autoFocus, editor]);
 
+  useEffect(() => {
+    if (note.title !== title) {
+      setTitle(note.title);
+    }
+  }, [note.title]);
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const t = e.target.value;
     setTitle(t);
