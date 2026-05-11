@@ -12,6 +12,7 @@ import { Arrow } from '../extensions/Arrow';
 import { CharacterColors } from '../extensions/CharacterColors';
 import { ClearFormattingOnEnter } from '../extensions/ClearFormattingOnEnter';
 import { SelectionDecoration } from '../extensions/SelectionDecoration';
+import { CollapsibleHeadings } from '../extensions/CollapsibleHeadings';
 
 
 const CustomBlockquote = Blockquote.extend({
@@ -78,6 +79,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CharacterColors,
       ClearFormattingOnEnter,
       SelectionDecoration,
+      CollapsibleHeadings,
       // TabIndent,
     ],
     content: note.body ? JSON.parse(note.body) : '',

@@ -298,6 +298,7 @@ body.dragging-note * {
   max-width: 680px;
   margin: 0 auto;
   padding: 56px 48px 80px;
+  position: relative;
 }
 
 .editor-title {
@@ -355,6 +356,8 @@ body.dragging-note * {
   line-height: 1.3;
   margin-top: 1.4em;
   margin-bottom: 0.3em;
+  position: relative;
+  cursor: text;
 }
 
 .editor-content .tiptap h2 {
@@ -364,6 +367,8 @@ body.dragging-note * {
   line-height: 1.35;
   margin-top: 1.2em;
   margin-bottom: 0.25em;
+  position: relative;
+  cursor: text;
 }
 
 .editor-content .tiptap h3 {
@@ -372,6 +377,8 @@ body.dragging-note * {
   color: hsl(0, 0%, 100%);
   margin-top: 1.1em;
   margin-bottom: 0.2em;
+  position: relative;
+  cursor: text;
 }
 
 .editor-content .tiptap ul,
@@ -629,4 +636,25 @@ body.dragging-note * {
 /* Zero-width space ensures the browser paints a caret on empty paragraphs */
 .editor-content .tiptap ul.chevron-list .chevron-content > p:empty::after {
   content: '\200B';
+}
+
+/* ── Collapsible Headings ── */
+
+.editor-content .tiptap .heading-caret {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity 0.12s;
+  cursor: pointer;
+  color: var(--text-muted);
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 0;
+}
+
+.editor-content .tiptap .heading-caret:hover {
+  opacity: 1;
 }
