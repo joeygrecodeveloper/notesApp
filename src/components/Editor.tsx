@@ -11,7 +11,7 @@ import { Arrow } from '../extensions/Arrow';
 import { CharacterColors } from '../extensions/CharacterColors';
 import { ClearFormattingOnEnter } from '../extensions/ClearFormattingOnEnter';
 import { SelectionDecoration } from '../extensions/SelectionDecoration';
-import { TabIndent } from '../extensions/TabIndent';
+
 
 const CustomBlockquote = Blockquote.extend({
   addInputRules() {

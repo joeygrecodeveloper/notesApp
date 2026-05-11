@@ -1,6 +1,7 @@
 import { Node, mergeAttributes, InputRule } from '@tiptap/core'
 import { TextSelection, Plugin } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { ResolvedPos } from '@tiptap/pm/model'
 
 const ArrowListItem = Node.create({
   name: 'arrowListItem',
@@ -125,7 +126,7 @@ export const ArrowList = Node.create({
   },
 
   addKeyboardShortcuts() {
-    const inArrowListItem = ($from: ReturnType<typeof this.editor.state.selection.$from>) =>
+    const inArrowListItem = ($from: ResolvedPos) =>
       $from.parent.type.name === 'paragraph' &&
       $from.node($from.depth - 1)?.type.name === 'arrowListItem' &&
       $from.node($from.depth - 2)?.type.name === this.name
