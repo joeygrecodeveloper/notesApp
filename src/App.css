@@ -538,3 +538,85 @@ body.dragging-note * {
 .editor-content .tiptap ul.arrow-list li[data-indent="6"] { padding-left: calc(var(--al-base) + 144px); }
 .editor-content .tiptap ul.arrow-list li[data-indent="7"] { padding-left: calc(var(--al-base) + 168px); }
 .editor-content .tiptap ul.arrow-list li[data-indent="8"] { padding-left: calc(var(--al-base) + 192px); }
+
+/* ── Chevron List ── */
+
+.editor-content .tiptap ul.chevron-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.editor-content .tiptap ul.chevron-list li.chevron-list-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.05em 0;
+}
+
+/* Chevron marker span — uses mask-image so it inherits currentColor */
+.editor-content .tiptap ul.chevron-list .chevron-marker {
+  display: block;
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  margin-top: 0.375em;
+  margin-right: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  /* level 1: single > */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8,2 L18,8 L8,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8,2 L18,8 L8,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+}
+
+/* level 1: scale down to 75% height and re-center on the line */
+.editor-content .tiptap ul.chevron-list li[data-level="1"] .chevron-marker {
+  height: 0.75em;
+  margin-top: 0.5em;
+}
+
+/* levels 2 and 3 use the wider 40×16 viewBox — match arrow-marker width */
+.editor-content .tiptap ul.chevron-list li[data-level="2"] .chevron-marker,
+.editor-content .tiptap ul.chevron-list li[data-level="3"] .chevron-marker {
+  flex: 0 0 33px;
+  width: 33px;
+  min-width: 33px;
+}
+
+/* level 2: full right-facing arrow (shaft + open chevron head) — same shape as inline >> arrow */
+.editor-content .tiptap ul.chevron-list li[data-level="2"] {
+  padding-left: 20px;
+}
+.editor-content .tiptap ul.chevron-list li[data-level="2"] .chevron-marker {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+}
+
+/* level 3: right-angle corner (L rotated right) — same shape as ArrowList continuation marker */
+.editor-content .tiptap ul.chevron-list li[data-level="3"] {
+  padding-left: 40px;
+}
+.editor-content .tiptap ul.chevron-list li[data-level="3"] .chevron-marker {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 40 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6,0 L6,4 Q6,8 14,8 L29,8 M21,2 L29,8 L21,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+}
+
+.editor-content .tiptap ul.chevron-list .chevron-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-content .tiptap ul.chevron-list .chevron-content > p {
+  margin: 0;
+}
+
+/* Zero-width space ensures the browser paints a caret on empty paragraphs */
+.editor-content .tiptap ul.chevron-list .chevron-content > p:empty::after {
+  content: '\200B';
+}

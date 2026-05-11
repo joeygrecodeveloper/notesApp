@@ -7,6 +7,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Note } from '../types';
 import { AutoPair } from '../extensions/AutoPair';
 import { ArrowList } from '../extensions/ArrowList';
+import { ChevronList } from '../extensions/ChevronList';
 import { Arrow } from '../extensions/Arrow';
 import { CharacterColors } from '../extensions/CharacterColors';
 import { ClearFormattingOnEnter } from '../extensions/ClearFormattingOnEnter';
@@ -72,6 +73,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       DisableShiftEnter,
       AutoPair,
       ArrowList,
+      ChevronList,
       Arrow,
       CharacterColors,
       ClearFormattingOnEnter,
