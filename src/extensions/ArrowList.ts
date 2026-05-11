@@ -161,14 +161,43 @@ export const ArrowList = Node.create({
       },
 
       Backspace: () => {
-        const { state } = this.editor
+        const { state, view } = this.editor
         const { $from, empty } = state.selection
-        if (!empty || $from.parent.type.name !== 'arrowListItem' || $from.parentOffset !== 0) return false
-        const indent = ($from.parent.attrs.indent as number) ?? 0
-        if (indent > 0) {
-          return this.editor.commands.updateAttributes('arrowListItem', { indent: indent - 1 })
+        // Guard: empty selection, cursor at start of the paragraph inside an arrowListItem
+        if (!empty || $from.parent.type.name !== 'paragraph' || $from.parentOffset !== 0) return false
+        const item = $from.node($from.depth - 1)
+        if (item?.type.name !== 'arrowListItem') return false
+
+        // Non-empty item at cursor start: let ProseMirror join naturally
+        if ($from.parent.content.size > 0) return false
+
+        // Empty item: delete it in one transaction, never let ProseMirror's default fire
+        const listNode    = $from.node($from.depth - 2)
+        const listFrom    = $from.before($from.depth - 2)
+        const listTo      = listFrom + listNode.nodeSize
+        const itemFrom    = $from.before($from.depth - 1)
+        const itemTo      = itemFrom + item.nodeSize
+        const isFirstItem = itemFrom === listFrom + 1
+
+        const tr = state.tr
+
+        if (listNode.childCount === 1) {
+          // Only item: delete entire list, cursor to end of block above
+          tr.delete(listFrom, listTo)
+          tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, listFrom - 1)), -1))
+        } else if (!isFirstItem) {
+          // Has a preceding sibling: delete item, cursor to end of that sibling
+          tr.delete(itemFrom, itemTo)
+          tr.setSelection(TextSelection.near(tr.doc.resolve(itemFrom - 1), -1))
+        } else {
+          // First item with siblings: delete item, cursor to end of block above the list
+          tr.delete(itemFrom, itemTo)
+          tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, listFrom - 1)), -1))
         }
-        return this.editor.commands.setNode('paragraph')
+
+        tr.scrollIntoView()
+        view.dispatch(tr)
+        return true
       },
 
       Enter: () => {
