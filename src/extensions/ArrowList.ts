@@ -5,7 +5,6 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view'
 const ArrowListItem = Node.create({
   name: 'arrowListItem',
   content: 'paragraph+',
-  defining: true,
 
   addAttributes() {
     return {
@@ -158,6 +157,17 @@ export const ArrowList = Node.create({
 
         view.dispatch(state.tr.setNodeMarkup(itemPos, null, { ...item.attrs, indent: indent - 1 }))
         return true
+      },
+
+      Backspace: () => {
+        const { state } = this.editor
+        const { $from, empty } = state.selection
+        if (!empty || $from.parent.type.name !== 'arrowListItem' || $from.parentOffset !== 0) return false
+        const indent = ($from.parent.attrs.indent as number) ?? 0
+        if (indent > 0) {
+          return this.editor.commands.updateAttributes('arrowListItem', { indent: indent - 1 })
+        }
+        return this.editor.commands.setNode('paragraph')
       },
 
       Enter: () => {

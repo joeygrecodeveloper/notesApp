@@ -40,6 +40,12 @@ export const TabIndent = Extension.create({
       Backspace: () => {
         const { state, view } = this.editor
         const { $from, empty } = state.selection
+
+        for (let depth = $from.depth; depth > 0; depth--) {
+          const nodeType = $from.node(depth).type.name
+          if (nodeType === 'listItem' || nodeType === 'arrowListItem') return false
+        }
+
         if (!empty || !inPlainParagraph($from)) return false
 
         const textBefore = $from.parent.textContent.slice(0, $from.parentOffset)

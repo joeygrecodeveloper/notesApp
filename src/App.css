@@ -339,6 +339,11 @@ body.dragging-note * {
   margin: 0;
 }
 
+.editor-content .tiptap ul + p:empty,
+.editor-content .tiptap ol + p:empty {
+  display: none;
+}
+
 .editor-content .tiptap h1 {
   font-size: 22px;
   font-weight: 700;

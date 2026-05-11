@@ -41,6 +41,7 @@ const DisableShiftEnter = Extension.create({
   },
 });
 
+
 interface EditorProps {
   note: Note;
   autoFocus?: boolean;
@@ -75,7 +76,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CharacterColors,
       ClearFormattingOnEnter,
       SelectionDecoration,
-      TabIndent,
+      // TabIndent,
     ],
     content: note.body ? JSON.parse(note.body) : '',
     onUpdate: ({ editor }) => {
