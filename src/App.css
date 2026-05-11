@@ -575,12 +575,6 @@ body.dragging-note * {
           mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8,2 L18,8 L8,14' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
 }
 
-/* level 1: scale down to 75% height and re-center on the line */
-.editor-content .tiptap ul.chevron-list li[data-level="1"] .chevron-marker {
-  height: 0.75em;
-  margin-top: 0.5em;
-}
-
 /* levels 2 and 3 use the wider 40×16 viewBox — match arrow-marker width */
 .editor-content .tiptap ul.chevron-list li[data-level="2"] .chevron-marker,
 .editor-content .tiptap ul.chevron-list li[data-level="3"] .chevron-marker {
