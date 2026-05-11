@@ -163,16 +163,16 @@ export const ChevronList = Node.create({
 
         const tr = state.tr
 
-        if (level > 1 && !isFirstItem) {
-          // Has a preceding sibling: delete item, cursor to end of preceding item
-          tr.delete(itemFrom, itemTo)
-          tr.setSelection(TextSelection.near(tr.doc.resolve(itemFrom - 1), -1))
-        } else if (listNode.childCount === 1) {
-          // Last item in list: delete whole list, cursor to end of preceding block
+        if (listNode.childCount === 1) {
+          // Only item: delete entire list, cursor to end of block above
           tr.delete(listFrom, listTo)
           tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, listFrom - 1)), -1))
+        } else if (!isFirstItem) {
+          // Has a preceding sibling (any level): delete item, cursor to end of that sibling
+          tr.delete(itemFrom, itemTo)
+          tr.setSelection(TextSelection.near(tr.doc.resolve(itemFrom - 1), -1))
         } else {
-          // Level 1 (or level 2/3 first item): delete item, cursor to end of preceding block
+          // First item with siblings: delete item, cursor to end of block above the list
           tr.delete(itemFrom, itemTo)
           tr.setSelection(TextSelection.near(tr.doc.resolve(Math.max(0, listFrom - 1)), -1))
         }
