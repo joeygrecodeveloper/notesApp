@@ -107,6 +107,10 @@ html, body, #root {
   flex-shrink: 0;
 }
 
+.dev-badge {
+  color: #EC4B4B;
+}
+
 .sidebar-list {
   flex: 1;
   overflow-y: auto;

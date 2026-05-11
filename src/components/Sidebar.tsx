@@ -164,7 +164,9 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">notesApp</div>
+      <div className="sidebar-header">
+        notesApp{import.meta.env.DEV && <span className="dev-badge"> - dev</span>}
+      </div>
       <div className="sidebar-list" ref={listRef}>
         {notes.map((note, index) => (
           <div key={note.id}>
