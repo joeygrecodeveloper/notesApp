@@ -1,9 +1,10 @@
 import { Extension } from '@tiptap/core'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
 interface CollapsibleState {
   collapsed: Map<number, boolean>
+  outsidePos: number | null
 }
 
 const collapsibleKey = new PluginKey<CollapsibleState>('collapsibleHeadings')
@@ -23,6 +24,21 @@ function makeCaret(headingPos: number, isCollapsed: boolean): HTMLElement {
 export const CollapsibleHeadings = Extension.create({
   name: 'collapsibleHeadings',
 
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['heading'],
+        attributes: {
+          sacrificial: {
+            default: null,
+            parseHTML: el => el.getAttribute('data-sacrificial') || null,
+            renderHTML: attrs => (attrs.sacrificial ? { 'data-sacrificial': 'true' } : {}),
+          },
+        },
+      },
+    ]
+  },
+
   addProseMirrorPlugins() {
     return [
       new Plugin<CollapsibleState>({
@@ -30,49 +46,193 @@ export const CollapsibleHeadings = Extension.create({
 
         state: {
           init(): CollapsibleState {
-            return { collapsed: new Map() }
+            return { collapsed: new Map(), outsidePos: null }
           },
 
           apply(tr, prev): CollapsibleState {
             const next = new Map<number, boolean>()
             prev.collapsed.forEach((isCollapsed, pos) => {
               const mapped = tr.mapping.map(pos)
-              if (tr.doc.nodeAt(mapped)?.type.name === 'heading') {
+              const n = tr.doc.nodeAt(mapped)
+              if (n?.type.name === 'heading' && !n.attrs.sacrificial) {
                 next.set(mapped, isCollapsed)
               }
             })
-            const meta = tr.getMeta(collapsibleKey) as { type: 'toggle'; pos: number } | undefined
+
+            let outsidePos: number | null = null
+            if (prev.outsidePos !== null) {
+              const mapped = tr.mapping.map(prev.outsidePos)
+              if (tr.doc.nodeAt(mapped)?.type.name === 'paragraph') outsidePos = mapped
+            }
+
+            const meta = tr.getMeta(collapsibleKey) as
+              | { type: 'toggle'; pos: number }
+              | { type: 'insert-outside'; pos: number }
+              | undefined
             if (meta?.type === 'toggle') {
               next.set(meta.pos, !(next.get(meta.pos) ?? false))
+              outsidePos = null
+            } else if (meta?.type === 'insert-outside') {
+              outsidePos = meta.pos
             }
-            return { collapsed: next }
+
+            return { collapsed: next, outsidePos }
           },
         },
 
+        appendTransaction(transactions, _oldState, newState) {
+          if (transactions.some(tr => tr.getMeta('sacrificial-insert'))) return null
+          if (!transactions.some(tr => tr.docChanged)) return null
+
+          const { doc, schema } = newState
+          const headingType = schema.nodes.heading
+          if (!headingType) return null
+
+          // Collect all non-sacrificial headings in document order
+          const real: Array<{ offset: number; level: number; nodeSize: number }> = []
+          doc.forEach((node, offset) => {
+            if (node.type.name === 'heading' && !node.attrs.sacrificial) {
+              real.push({ offset, level: node.attrs.level as number, nodeSize: node.nodeSize })
+            }
+          })
+          if (real.length === 0) return null
+
+          const insertions: Array<{ pos: number; level: number }> = []
+
+          for (let i = 0; i < real.length; i++) {
+            const h = real[i]
+
+            // Scope ends at the next non-sacrificial heading with level <= h.level, or docEnd
+            let scopeEnd = doc.content.size
+            for (let j = i + 1; j < real.length; j++) {
+              if (real[j].level <= h.level) {
+                scopeEnd = real[j].offset
+                break
+              }
+            }
+
+            // Check if a sacrificial heading of this level already exists anywhere in the scope
+            let hasSacrificial = false
+            doc.forEach((node, offset) => {
+              if (
+                node.type.name === 'heading' &&
+                node.attrs.sacrificial === true &&
+                (node.attrs.level as number) === h.level &&
+                offset >= h.offset + h.nodeSize &&
+                offset < scopeEnd
+              ) {
+                hasSacrificial = true
+              }
+            })
+
+            if (!hasSacrificial) insertions.push({ pos: scopeEnd, level: h.level })
+          }
+
+          if (insertions.length === 0) return null
+
+          const tr = newState.tr
+          tr.setMeta('sacrificial-insert', true)
+          // Insert descending so lower positions are unaffected by higher-position inserts
+          insertions.sort((a, b) => b.pos - a.pos)
+          for (const ins of insertions) {
+            tr.insert(ins.pos, headingType.create({ level: ins.level, sacrificial: true }))
+          }
+          return tr
+        },
+
         props: {
-          handleClick(view, _pos, event) {
-            const target = event.target as HTMLElement
-            const caret = target.closest('[data-heading-pos]') as HTMLElement | null
-            if (!caret) return false
-            const headingPos = parseInt(caret.getAttribute('data-heading-pos') ?? '-1', 10)
-            if (headingPos < 0) return false
-            view.dispatch(view.state.tr.setMeta(collapsibleKey, { type: 'toggle', pos: headingPos }))
-            return true
+          handleDOMEvents: {
+            mousedown(view, event) {
+              const coords = view.posAtCoords({ left: event.clientX, top: event.clientY })
+              const pos = coords?.pos ?? null
+
+              const { doc } = view.state
+              const pluginState = collapsibleKey.getState(view.state)
+
+              // Caret toggle — check the DOM event target first
+              const target = event.target as HTMLElement
+              const caret = target.closest('[data-heading-pos]') as HTMLElement | null
+              if (caret) {
+                const headingPos = parseInt(caret.getAttribute('data-heading-pos') ?? '-1', 10)
+                if (headingPos >= 0) {
+                  view.dispatch(view.state.tr.setMeta(collapsibleKey, { type: 'toggle', pos: headingPos }))
+                  event.preventDefault()
+                  event.stopPropagation()
+                  event.stopImmediatePropagation()
+                  return true
+                }
+              }
+
+              if (pos === null || !pluginState) return false
+
+              // Collect all top-level nodes with their offsets
+              const nodes: Array<{ node: Parameters<Parameters<typeof doc.forEach>[0]>[0]; offset: number }> = []
+              doc.forEach((node, offset) => nodes.push({ node, offset }))
+
+              // Find a collapsed heading whose hidden scope contains pos
+              for (let i = 0; i < nodes.length; i++) {
+                const { node: hNode, offset: hOffset } = nodes[i]
+                if (hNode.type.name !== 'heading' || hNode.attrs.sacrificial) continue
+                if (!(pluginState.collapsed.get(hOffset) ?? false)) continue
+
+                // Find the sacrificial heading that closes this scope
+                let sacrificialIdx = -1
+                for (let j = i + 1; j < nodes.length; j++) {
+                  const { node: n } = nodes[j]
+                  if (n.type.name === 'heading' && n.attrs.sacrificial && (n.attrs.level as number) === (hNode.attrs.level as number)) {
+                    sacrificialIdx = j
+                    break
+                  }
+                  // A same-or-higher-level real heading terminates the scope before we find a sacrificial
+                  if (n.type.name === 'heading' && !n.attrs.sacrificial && (n.attrs.level as number) <= (hNode.attrs.level as number)) break
+                }
+
+                if (sacrificialIdx === -1) continue
+
+                const { node: sNode, offset: sOffset } = nodes[sacrificialIdx]
+                const scopeEnd = sOffset + sNode.nodeSize
+                const headingEnd = hOffset + hNode.nodeSize
+
+                // Click on the heading itself — let ProseMirror handle normally
+                if (pos >= hOffset && pos < headingEnd - 1) return false
+
+                if (pos >= headingEnd - 1 && pos < scopeEnd) {
+                  // pos is inside the hidden scope below the heading — redirect cursor
+                  const targetPos = sOffset + sNode.nodeSize + 1
+                  event.preventDefault()
+                  event.stopPropagation()
+                  event.stopImmediatePropagation()
+                  setTimeout(() => {
+                    const $target = view.state.doc.resolve(Math.min(targetPos, view.state.doc.content.size - 1))
+                    view.dispatch(view.state.tr.setSelection(TextSelection.near($target)))
+                    view.focus()
+                  }, 200)
+                  return true
+                }
+              }
+
+              return false
+            },
           },
 
           decorations(state) {
             const pluginState = collapsibleKey.getState(state)
             if (!pluginState) return DecorationSet.empty
 
-            const { collapsed } = pluginState
+            const { collapsed, outsidePos } = pluginState
             const decos: Decoration[] = []
             let collapsedLevel: number | null = null
 
             state.doc.forEach((node, offset) => {
               if (node.type.name === 'heading') {
                 const level = node.attrs.level as number
+                const isSacrificial = !!node.attrs.sacrificial
 
-                if (collapsedLevel !== null && level > collapsedLevel) {
+                if (isSacrificial) {
+                  // Hidden, and clears collapsedLevel for its matching level so content after it is visible
+                  if (collapsedLevel !== null && level === collapsedLevel) collapsedLevel = null
+                  decos.push(Decoration.node(offset, offset + node.nodeSize, { style: 'display:none' }))
+                } else if (collapsedLevel !== null && level > collapsedLevel) {
                   // Dominated by a collapsed ancestor — hide it, keep its own state intact
                   decos.push(Decoration.node(offset, offset + node.nodeSize, { style: 'display:none' }))
                 } else {
@@ -100,7 +260,12 @@ export const CollapsibleHeadings = Extension.create({
                   }
                 }
               } else if (collapsedLevel !== null) {
-                decos.push(Decoration.node(offset, offset + node.nodeSize, { style: 'display:none' }))
+                // The paragraph inserted via dead-zone click acts as an explicit scope boundary
+                if (outsidePos !== null && offset === outsidePos) {
+                  collapsedLevel = null
+                } else {
+                  decos.push(Decoration.node(offset, offset + node.nodeSize, { style: 'display:none' }))
+                }
               }
             })
 
