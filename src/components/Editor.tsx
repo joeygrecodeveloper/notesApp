@@ -2,6 +2,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Strike from '@tiptap/extension-strike';
 import Blockquote from '@tiptap/extension-blockquote';
+import Link from '@tiptap/extension-link';
 import { Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -44,6 +45,12 @@ const DisableShiftEnter = Extension.create({
   },
 });
 
+const URL_TLD_RE = /\.(com|org|net|io|dev|app|co|edu|gov|uk|ca|de|fr|au|me|ai|tv|info|biz)(\/|$|\s)/i
+
+function isURL(text: string): boolean {
+  return /^https?:\/\//i.test(text) || URL_TLD_RE.test(text)
+}
+
 const PastePlainText = Extension.create({
   name: 'pastePlainText',
   addProseMirrorPlugins() {
@@ -53,7 +60,26 @@ const PastePlainText = Extension.create({
           handlePaste(view, event) {
             const text = event.clipboardData?.getData('text/plain') ?? '';
             if (!text) return false;
-            view.dispatch(view.state.tr.insertText(text));
+
+            const { state } = view;
+            const { selection } = state;
+            const hasSelection = !selection.empty;
+
+            if (hasSelection && isURL(text)) {
+              // Wrap selected text as a hyperlink
+              const href = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+              view.dispatch(
+                state.tr.addMark(
+                  selection.from,
+                  selection.to,
+                  state.schema.marks.link.create({ href })
+                )
+              );
+              return true;
+            }
+
+            // Replace selection or insert at cursor as plain text
+            view.dispatch(state.tr.insertText(text));
             return true;
           },
         },
@@ -88,6 +114,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ strike: false, blockquote: false, hardBreak: false }),
+      Link.configure({ openOnClick: false }),
       CustomStrike,
       CustomBlockquote,
       DisableShiftEnter,
