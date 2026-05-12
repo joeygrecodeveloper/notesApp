@@ -1,3 +1,4 @@
+mod commands;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -36,6 +37,7 @@ pub fn run() {
                 .add_migrations("sqlite:notes.db", migrations)
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![commands::fetch_url_metadata])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

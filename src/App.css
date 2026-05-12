@@ -474,6 +474,49 @@ body.dragging-note * {
   cursor: pointer;
 }
 
+/* ── URL Mention chip ── */
+@keyframes url-mention-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+.url-mention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--background-light);
+  color: var(--foreground);
+  font-size: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: baseline;
+}
+
+.url-mention-favicon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.url-mention-title {
+  white-space: nowrap;
+}
+
+.url-mention-placeholder {
+  display: inline-block;
+  width: 80px;
+  height: 0.7em;
+  border-radius: 3px;
+  background: var(--foreground);
+  animation: url-mention-pulse 1.2s ease-in-out infinite;
+}
+
 /* ── Inline Arrow nodes (>> <<) ── */
 .editor-content .tiptap span[data-arrow][data-direction="right"],
 .editor-content .tiptap span[data-arrow][data-direction="left"] {

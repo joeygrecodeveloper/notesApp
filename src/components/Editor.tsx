@@ -15,6 +15,7 @@ import { CharacterColors } from '../extensions/CharacterColors';
 import { ClearFormattingOnEnter } from '../extensions/ClearFormattingOnEnter';
 import { SelectionDecoration } from '../extensions/SelectionDecoration';
 import { CollapsibleHeadings } from '../extensions/CollapsibleHeadings';
+import { UrlMention } from '../extensions/UrlMention';
 
 
 const CustomBlockquote = Blockquote.extend({
@@ -46,8 +47,10 @@ const DisableShiftEnter = Extension.create({
 });
 
 const URL_TLD_RE = /\.(com|org|net|io|dev|app|co|edu|gov|uk|ca|de|fr|au|me|ai|tv|info|biz)(\/|$|\s)/i
+const CODE_EXT_RE = /\.(ts|js|jsx|tsx|css|md|py|rs|json|html|vue|swift|kt|go|rb|cpp|c|h)(\s|$)/i
 
 function isURL(text: string): boolean {
+  if (CODE_EXT_RE.test(text)) return false
   return /^https?:\/\//i.test(text) || URL_TLD_RE.test(text)
 }
 
@@ -59,6 +62,7 @@ const PastePlainText = Extension.create({
         props: {
           handlePaste(view, event) {
             const text = event.clipboardData?.getData('text/plain') ?? '';
+            console.log('[handlePaste] text:', text, '| hasSelection:', !view.state.selection.empty, '| isURL:', isURL(text));
             if (!text) return false;
 
             const { state } = view;
@@ -66,7 +70,7 @@ const PastePlainText = Extension.create({
             const hasSelection = !selection.empty;
 
             if (hasSelection && isURL(text)) {
-              // Wrap selected text as a hyperlink
+              console.log('[handlePaste] branch: selection + URL → hyperlink');
               const href = /^https?:\/\//i.test(text) ? text : `https://${text}`;
               view.dispatch(
                 state.tr.addMark(
@@ -78,7 +82,18 @@ const PastePlainText = Extension.create({
               return true;
             }
 
-            // Replace selection or insert at cursor as plain text
+            if (!hasSelection && isURL(text)) {
+              console.log('[handlePaste] branch: no selection + URL → urlMention');
+              const href = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+              view.dispatch(
+                state.tr.replaceSelectionWith(
+                  state.schema.nodes.urlMention.create({ url: href, title: text, favicon: '', loading: true })
+                )
+              );
+              return true;
+            }
+
+            console.log('[handlePaste] branch: plain text fallback');
             view.dispatch(state.tr.insertText(text));
             return true;
           },
@@ -113,7 +128,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ strike: false, blockquote: false, hardBreak: false }),
+      StarterKit.configure({ strike: false, blockquote: false, hardBreak: false, link: false }),
       Link.configure({ openOnClick: false }),
       CustomStrike,
       CustomBlockquote,
@@ -127,6 +142,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       ClearFormattingOnEnter,
       SelectionDecoration,
       CollapsibleHeadings,
+      UrlMention,
       // TabIndent,
     ],
     content: note.body ? JSON.parse(note.body) : '',
@@ -169,7 +185,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
         onKeyDown={handleTitleKeyDown}
         placeholder="Untitled"
       />
-      <EditorContent editor={editor} className="editor-content" spellCheck={true} />
+<EditorContent editor={editor} className="editor-content" spellCheck={true} />
     </div>
   );
 }
