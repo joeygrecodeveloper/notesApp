@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Strike from '@tiptap/extension-strike';
 import Blockquote from '@tiptap/extension-blockquote';
 import { Extension } from '@tiptap/core';
+import { Plugin } from '@tiptap/pm/state';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Note } from '../types';
 import { AutoPair } from '../extensions/AutoPair';
@@ -43,6 +44,24 @@ const DisableShiftEnter = Extension.create({
   },
 });
 
+const PastePlainText = Extension.create({
+  name: 'pastePlainText',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handlePaste(view, event) {
+            const text = event.clipboardData?.getData('text/plain') ?? '';
+            if (!text) return false;
+            view.dispatch(view.state.tr.insertText(text));
+            return true;
+          },
+        },
+      }),
+    ];
+  },
+});
+
 
 interface EditorProps {
   note: Note;
@@ -72,6 +91,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CustomStrike,
       CustomBlockquote,
       DisableShiftEnter,
+      PastePlainText,
       AutoPair,
       ArrowList,
       ChevronList,
