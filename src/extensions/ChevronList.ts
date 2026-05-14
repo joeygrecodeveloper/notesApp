@@ -103,6 +103,7 @@ export const ChevronList = Node.create({
 
     return {
       Tab: () => {
+        console.log('[ChevronList] Tab fired, inChevronListItem:', inChevronListItem(this.editor.state.selection.$from))
         const { state, view } = this.editor
         const { $from } = state.selection
         if (!inChevronListItem($from)) return false

@@ -17,6 +17,7 @@ import { SelectionDecoration } from '../extensions/SelectionDecoration';
 import { CollapsibleHeadings } from '../extensions/CollapsibleHeadings';
 import { UrlMention } from '../extensions/UrlMention';
 import { StatusNode } from '../extensions/StatusNode';
+import { TabIndent } from '../extensions/TabIndent';
 
 
 const CustomBlockquote = Blockquote.extend({
@@ -145,7 +146,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CollapsibleHeadings,
       UrlMention,
       StatusNode,
-      // TabIndent,
+      TabIndent,
     ],
     content: note.body ? JSON.parse(note.body) : '',
     onUpdate: ({ editor }) => {

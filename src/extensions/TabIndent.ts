@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core'
 import type { ResolvedPos } from '@tiptap/pm/model'
 
-const LIST_ITEM_TYPES = new Set(['listItem', 'taskItem', 'arrowListItem'])
+const LIST_ITEM_TYPES = new Set(['listItem', 'taskItem', 'arrowListItem', 'chevronListItem'])
 
 function inPlainParagraph($from: ResolvedPos): boolean {
   return (
@@ -16,6 +16,7 @@ export const TabIndent = Extension.create({
   addKeyboardShortcuts() {
     return {
       Tab: () => {
+        console.log('[TabIndent] handler fired')
         const { state, view } = this.editor
         const { $from } = state.selection
         if (!inPlainParagraph($from)) return false
