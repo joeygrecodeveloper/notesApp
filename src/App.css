@@ -517,6 +517,32 @@ body.dragging-note * {
   animation: url-mention-pulse 1.2s ease-in-out infinite;
 }
 
+/* ── Status node ── */
+.editor-content .tiptap span[data-status] {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: -apple-system, sans-serif;
+  paint-order: stroke fill;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.editor-content .tiptap span[data-status="TODO"] {
+  color: #ffc7cd;
+  -webkit-text-stroke: 1.5px #A70524;
+}
+
+.editor-content .tiptap span[data-status="INPROGRESS"] {
+  color: #ffeb9c;
+  -webkit-text-stroke: 1.5px #C59838;
+}
+
+.editor-content .tiptap span[data-status="DONE"] {
+  color: #c6efcd;
+  -webkit-text-stroke: 1.5px #396D53;
+}
+
 /* ── Inline Arrow nodes (>> <<) ── */
 .editor-content .tiptap span[data-arrow][data-direction="right"],
 .editor-content .tiptap span[data-arrow][data-direction="left"] {
