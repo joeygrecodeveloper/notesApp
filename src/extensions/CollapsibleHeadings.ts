@@ -52,6 +52,9 @@ export const CollapsibleHeadings = Extension.create({
           apply(tr, prev): CollapsibleState {
             const next = new Map<number, boolean>()
             prev.collapsed.forEach((isCollapsed, pos) => {
+              // pos+1 is strictly inside the heading node. If it's marked deleted,
+              // the heading itself was removed — don't carry the entry forward.
+              if (tr.mapping.mapResult(pos + 1).deleted) return
               const mapped = tr.mapping.map(pos)
               const n = tr.doc.nodeAt(mapped)
               if (n?.type.name === 'heading' && !n.attrs.sacrificial) {
