@@ -56,6 +56,14 @@ export async function deleteNote(id: string): Promise<void> {
   await conn.execute('DELETE FROM notes WHERE id = ?', [id]);
 }
 
+export async function updateCollapsedHeadings(id: string, json: string): Promise<void> {
+  const conn = await getDb();
+  await conn.execute(
+    'UPDATE notes SET collapsed_headings = ? WHERE id = ?',
+    [json, id]
+  );
+}
+
 export async function reorderNotes(orderedIds: string[]): Promise<void> {
   const conn = await getDb();
   for (let i = 0; i < orderedIds.length; i++) {

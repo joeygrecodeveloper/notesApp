@@ -7,6 +7,7 @@ import { Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Note } from '../types';
+import { updateCollapsedHeadings } from '../db';
 import { AutoPair } from '../extensions/AutoPair';
 import { ArrowList } from '../extensions/ArrowList';
 import { ChevronList } from '../extensions/ChevronList';
@@ -111,9 +112,10 @@ interface EditorProps {
   autoFocus?: boolean;
   onTitleChange: (id: string, title: string) => void;
   onSave: (id: string, title: string, body: string) => void;
+  onCollapsedHeadingsChange: (id: string, json: string) => void;
 }
 
-export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) {
+export function Editor({ note, autoFocus, onTitleChange, onSave, onCollapsedHeadingsChange }: EditorProps) {
   const [title, setTitle] = useState(note.title);
   const titleRef = useRef(note.title);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -127,6 +129,11 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
     },
     [note.id, onSave]
   );
+
+  const initialCollapsed: Record<string, boolean> = (() => {
+    try { return note.collapsed_headings ? JSON.parse(note.collapsed_headings) : {} }
+    catch { return {} }
+  })()
 
   const editor = useEditor({
     extensions: [
@@ -143,7 +150,15 @@ export function Editor({ note, autoFocus, onTitleChange, onSave }: EditorProps) 
       CharacterColors,
       ClearFormattingOnEnter,
       SelectionDecoration,
-      CollapsibleHeadings,
+      CollapsibleHeadings.configure({
+        initialCollapsed,
+        onToggle: (json: string) => {
+          updateCollapsedHeadings(note.id, json).catch(err =>
+            console.error('[Editor] failed to save collapsed_headings:', err)
+          )
+          onCollapsedHeadingsChange(note.id, json)
+        },
+      }),
       UrlMention,
       StatusNode,
       TabIndent,

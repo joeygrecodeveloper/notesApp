@@ -82,6 +82,10 @@ function App() {
     reorderNotes(orderedIds).catch(err => console.error('Failed to reorder notes:', err));
   }, []);
 
+  const handleCollapsedHeadingsChange = (id: string, json: string) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, collapsed_headings: json } : n));
+  };
+
   const handleRenameNote = async (id: string, title: string) => {
     const note = notes.find(n => n.id === id);
     if (!note) return;
@@ -114,6 +118,7 @@ function App() {
             autoFocus={activeNote.id === autoFocusId}
             onTitleChange={handleTitleChange}
             onSave={handleSaveNote}
+            onCollapsedHeadingsChange={handleCollapsedHeadingsChange}
           />
         ) : (
           <div className="empty-canvas" />

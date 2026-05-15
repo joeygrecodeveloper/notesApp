@@ -36,7 +36,7 @@ export const StatusNode = Node.create({
   },
 
   addNodeView() {
-    return ({ node: initialNode, getPos, editor }: any) => {
+    return ({ node: initialNode }: any) => {
       let currentNode = initialNode
 
       const span = document.createElement('span')

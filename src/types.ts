@@ -4,4 +4,5 @@ export interface Note {
   body: string;
   created_at: string;
   updated_at: string;
+  collapsed_headings?: string | null;
 }

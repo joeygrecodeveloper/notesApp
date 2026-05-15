@@ -1,10 +1,63 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 
 interface CollapsibleState {
   collapsed: Map<number, boolean>
   outsidePos: number | null
+}
+
+function resolveCollapsedPositions(
+  doc: ProseMirrorNode,
+  saved: Record<string, boolean>,
+): Map<number, boolean> {
+  // First pass: count occurrences of each h{level}:{text} key
+  const counts = new Map<string, number>()
+  doc.forEach((node) => {
+    if (node.type.name !== 'heading' || node.attrs.sacrificial) return
+    const key = `h${node.attrs.level}:${node.textContent.trim()}`
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  })
+
+  // Second pass: assign keys and resolve positions
+  const result = new Map<number, boolean>()
+  const seen = new Map<string, number>()
+  doc.forEach((node, offset) => {
+    if (node.type.name !== 'heading' || node.attrs.sacrificial) return
+    const baseKey = `h${node.attrs.level}:${node.textContent.trim()}`
+    const idx = seen.get(baseKey) ?? 0
+    seen.set(baseKey, idx + 1)
+    const lookupKey = (counts.get(baseKey) ?? 1) > 1 ? `${baseKey}:${idx}` : baseKey
+    if (saved[lookupKey]) result.set(offset, true)
+  })
+
+  return result
+}
+
+function serializeCollapsedPositions(
+  doc: ProseMirrorNode,
+  collapsed: Map<number, boolean>,
+): Record<string, boolean> {
+  const counts = new Map<string, number>()
+  doc.forEach((node) => {
+    if (node.type.name !== 'heading' || node.attrs.sacrificial) return
+    const key = `h${node.attrs.level}:${node.textContent.trim()}`
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  })
+
+  const result: Record<string, boolean> = {}
+  const seen = new Map<string, number>()
+  doc.forEach((node, offset) => {
+    if (node.type.name !== 'heading' || node.attrs.sacrificial) return
+    const baseKey = `h${node.attrs.level}:${node.textContent.trim()}`
+    const idx = seen.get(baseKey) ?? 0
+    seen.set(baseKey, idx + 1)
+    const key = (counts.get(baseKey) ?? 1) > 1 ? `${baseKey}:${idx}` : baseKey
+    if (collapsed.get(offset)) result[key] = true
+  })
+
+  return result
 }
 
 const collapsibleKey = new PluginKey<CollapsibleState>('collapsibleHeadings')
@@ -24,6 +77,13 @@ function makeCaret(headingPos: number, isCollapsed: boolean): HTMLElement {
 export const CollapsibleHeadings = Extension.create({
   name: 'collapsibleHeadings',
 
+  addOptions() {
+    return {
+      initialCollapsed: {} as Record<string, boolean>,
+      onToggle: (_json: string) => {},
+    }
+  },
+
   addGlobalAttributes() {
     return [
       {
@@ -40,13 +100,18 @@ export const CollapsibleHeadings = Extension.create({
   },
 
   addProseMirrorPlugins() {
+    const initialCollapsed = this.options.initialCollapsed as Record<string, boolean>
+    const onToggle = this.options.onToggle as (json: string) => void
     return [
       new Plugin<CollapsibleState>({
         key: collapsibleKey,
 
         state: {
-          init(): CollapsibleState {
-            return { collapsed: new Map(), outsidePos: null }
+          init(_config, state): CollapsibleState {
+            return {
+              collapsed: resolveCollapsedPositions(state.doc, initialCollapsed),
+              outsidePos: null,
+            }
           },
 
           apply(tr, prev): CollapsibleState {
@@ -159,6 +224,13 @@ export const CollapsibleHeadings = Extension.create({
                 const headingPos = parseInt(caret.getAttribute('data-heading-pos') ?? '-1', 10)
                 if (headingPos >= 0) {
                   view.dispatch(view.state.tr.setMeta(collapsibleKey, { type: 'toggle', pos: headingPos }))
+                  const newPluginState = collapsibleKey.getState(view.state)
+                  if (newPluginState) {
+                    const serialized = serializeCollapsedPositions(view.state.doc, newPluginState.collapsed)
+                    const json = JSON.stringify(serialized)
+                    console.log('[CollapsibleHeadings] writing collapsed_headings for note, json:', json)
+                    onToggle(json)
+                  }
                   event.preventDefault()
                   event.stopPropagation()
                   event.stopImmediatePropagation()

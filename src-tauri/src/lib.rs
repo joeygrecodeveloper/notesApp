@@ -28,6 +28,12 @@ pub fn run() {
             sql: "UPDATE notes SET sort_order = (SELECT COUNT(*) FROM notes n2 WHERE n2.rowid <= notes.rowid)",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "add_collapsed_headings_column",
+            sql: "ALTER TABLE notes ADD COLUMN collapsed_headings TEXT DEFAULT NULL",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
