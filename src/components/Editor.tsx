@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link';
 import { Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import type { Note } from '../types';
 import { updateCollapsedHeadings } from '../db';
 import { AutoPair } from '../extensions/AutoPair';
@@ -172,6 +173,88 @@ export function Editor({ note, autoFocus, onTitleChange, onSave, onCollapsedHead
   useEffect(() => {
     if (autoFocus && editor) editor.commands.focus('end');
   }, [autoFocus, editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+
+    listen('rich-paste-shortcut', () => {
+      const hasSelection = !editor.state.selection.empty;
+
+      (async () => {
+        try {
+          const items = await navigator.clipboard.read();
+          console.log('[richPaste] clipboard item types:', items.map(i => i.types));
+          for (const item of items) {
+            if (item.types.includes('text/html')) {
+              const html = await item.getType('text/html').then(b => b.text());
+              console.log('[richPaste] raw HTML from clipboard:', html);
+              editor.commands.insertContent(html);
+              console.log('[richPaste] insertContent called with HTML');
+              return;
+            }
+            if (item.types.includes('text/plain')) {
+              const text = await item.getType('text/plain').then(b => b.text());
+              console.log('[richPaste] plain text from clipboard:', text);
+              if (isURL(text)) {
+                const href = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+                if (hasSelection) {
+                  console.log('[richPaste] selection + URL detected');
+                  const { state } = editor.view;
+                  const { selection } = state;
+                  editor.view.dispatch(
+                    state.tr.addMark(selection.from, selection.to, state.schema.marks.link.create({ href }))
+                  );
+                } else {
+                  console.log('[richPaste] no selection + URL → inserting plain text');
+                  editor.commands.insertContent(text);
+                }
+              } else {
+                editor.commands.insertContent(text);
+                console.log('[richPaste] insertContent called with plain text');
+              }
+              return;
+            }
+          }
+          console.log('[richPaste] no usable clipboard type found');
+        } catch (err) {
+          console.log('[richPaste] clipboard.read() failed, falling back to readText(). Error:', err);
+          const text = await navigator.clipboard.readText().catch(e => {
+            console.log('[richPaste] readText() also failed:', e);
+            return '';
+          });
+          if (text) {
+            if (isURL(text)) {
+              const href = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+              if (hasSelection) {
+                console.log('[richPaste] selection + URL detected (fallback)');
+                const { state } = editor.view;
+                const { selection } = state;
+                editor.view.dispatch(
+                  state.tr.addMark(selection.from, selection.to, state.schema.marks.link.create({ href }))
+                );
+              } else {
+                console.log('[richPaste] no selection + URL → inserting plain text (fallback)');
+                editor.commands.insertContent(text);
+              }
+            } else {
+              editor.commands.insertContent(text);
+              console.log('[richPaste] insertContent called with readText() fallback:', text);
+            }
+          }
+        }
+      })();
+    }).then(fn => {
+      if (cancelled) fn();
+      else unlisten = fn;
+    });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [editor]);
 
   useEffect(() => {
     if (note.title !== title) {
