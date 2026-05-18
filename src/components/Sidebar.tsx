@@ -34,12 +34,14 @@ export function Sidebar({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [nearDeleteId, setNearDeleteId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const newInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Refs keep event listener callbacks free of stale closures
   const notesRef = useRef<Note[]>(notes);
@@ -53,6 +55,7 @@ export function Sidebar({
 
   useEffect(() => { notesRef.current = notes; }, [notes]);
   useEffect(() => { onReorderRef.current = onReorderNotes; }, [onReorderNotes]);
+  useEffect(() => () => clearTimeout(confirmTimerRef.current), []);
 
   useEffect(() => {
     if (isCreating) newInputRef.current?.focus();
@@ -131,6 +134,34 @@ export function Sidebar({
     };
   }, []);
 
+  const clearConfirm = () => {
+    clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(null);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(id);
+    confirmTimerRef.current = setTimeout(() => setConfirmDeleteId(null), 5000);
+  };
+
+  const handleConfirmDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    clearConfirm();
+    onDeleteNote(id);
+  };
+
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const handle = (e: MouseEvent) => {
+      const row = listRef.current?.querySelector(`[data-note-id="${confirmDeleteId}"]`);
+      if (row && !row.contains(e.target as Node)) clearConfirm();
+    };
+    document.addEventListener('click', handle, true);
+    return () => document.removeEventListener('click', handle, true);
+  }, [confirmDeleteId]);
+
   const startCreating = () => { setIsCreating(true); setNewTitle(''); };
 
   const commitNewNote = () => {
@@ -144,7 +175,7 @@ export function Sidebar({
     else if (e.key === 'Escape') { setIsCreating(false); setNewTitle(''); }
   };
 
-  const startRenaming = (id: string, title: string) => { setRenamingId(id); setRenameValue(title); };
+  const startRenaming = (id: string, title: string) => { clearConfirm(); setRenamingId(id); setRenameValue(title); };
 
   const commitRename = () => {
     if (renamingId) onRenameNote(renamingId, renameValue.trim() || 'Untitled');
@@ -172,7 +203,8 @@ export function Sidebar({
           <div key={note.id}>
             <div className={`drop-indicator${dropIndex === index ? ' active' : ''}`} />
             <div
-              className={`note-item${note.id === activeNoteId ? ' active' : ''}${draggingId === note.id ? ' dragging' : ''}`}
+              data-note-id={note.id}
+              className={`note-item${note.id === activeNoteId ? ' active' : ''}${draggingId === note.id ? ' dragging' : ''}${confirmDeleteId === note.id ? ' confirm-delete' : ''}`}
               onMouseDown={e => {
                 if (e.button !== 0 || renamingId === note.id) return;
                 mouseDownIdRef.current = note.id;
@@ -206,10 +238,11 @@ export function Sidebar({
                 <>
                   <span className="note-title">{note.title || 'Untitled'}</span>
                   <button
-                    className={`delete-btn${nearDeleteId === note.id ? ' visible' : ''}`}
-                    onClick={e => { e.stopPropagation(); onDeleteNote(note.id); }}
+                    className={`delete-btn${nearDeleteId === note.id || confirmDeleteId === note.id ? ' visible' : ''}${confirmDeleteId === note.id ? ' confirming' : ''}`}
+                    onClick={e => confirmDeleteId === note.id ? handleConfirmDelete(e, note.id) : handleDeleteClick(e, note.id)}
                   >
-                    ×
+                    <span className="delete-btn-x">×</span>
+                    <span className="delete-btn-text">delete</span>
                   </button>
                 </>
               )}
