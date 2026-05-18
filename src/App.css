@@ -183,6 +183,7 @@ body.dragging-note * {
 
 .note-item.active {
   background: var(--line-highlight);
+  box-shadow: inset 0 0 0 0.5px hsla(180, 36%, 54%, 0.6);
 }
 
 .note-item.active .note-title {
