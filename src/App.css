@@ -423,7 +423,32 @@ body.dragging-note * {
   color: #37B7B5;
 }
 
+/* Ordered list — per-level list-style-type and marker color (capped at 4 levels) */
+.editor-content .tiptap ol {
+  list-style-type: decimal;
+}
 .editor-content .tiptap ol li::marker {
+  color: #939196;
+}
+
+.editor-content .tiptap ol ol {
+  list-style-type: upper-alpha;
+}
+.editor-content .tiptap ol ol li::marker {
+  color: #37B7B5;
+}
+
+.editor-content .tiptap ol ol ol {
+  list-style-type: lower-alpha;
+}
+.editor-content .tiptap ol ol ol li::marker {
+  color: #72EF87;
+}
+
+.editor-content .tiptap ol ol ol ol {
+  list-style-type: lower-roman;
+}
+.editor-content .tiptap ol ol ol ol li::marker {
   color: #939196;
 }
 
