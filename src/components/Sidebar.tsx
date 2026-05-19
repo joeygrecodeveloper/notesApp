@@ -256,6 +256,7 @@ export function Sidebar({
             <input
               ref={newInputRef}
               className="new-note-input"
+              placeholder="new note..."
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               onKeyDown={handleNewKeyDown}
