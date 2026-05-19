@@ -66,6 +66,22 @@ export const AutoPair = Extension.create({
       };
     }
 
+    // ── Tab: jump past closing char when cursor is directly adjacent ────────
+    const CLOSING = new Set([')', ']', '}', '"', "'"]);
+    shortcuts['Tab'] = () => {
+      const { state, dispatch } = this.editor.view;
+      const { selection } = state;
+      const { from, empty } = selection;
+
+      if (!empty) return false;
+
+      const next = charAt(state.doc, from);
+      if (!CLOSING.has(next)) return false;
+
+      dispatch(state.tr.setSelection(TextSelection.create(state.doc, from + 1)));
+      return true;
+    };
+
     // ── Closing characters: skip over instead of inserting ──────────────────
     for (const close of [')', ']', '}']) {
       shortcuts[close] = () => {
