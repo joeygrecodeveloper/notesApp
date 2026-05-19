@@ -495,9 +495,8 @@ body.dragging-note * {
 }
 
 .pm-selection {
-  background: hsla(210, 13%, 40%, 0.7);
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px hsl(210, 13%, 45%);
+  background: transparent;
+  box-shadow: none;
 }
 
 .editor-content .tiptap a {
