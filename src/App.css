@@ -602,9 +602,9 @@ body.dragging-note * {
 /* Arrow marker span — always present in the DOM, so space is always reserved */
 .editor-content .tiptap ul.arrow-list .arrow-marker {
   display: block;
-  flex: 0 0 33px;
-  width: 33px;
-  min-width: 33px;
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
   height: 1em;
   background-color: currentColor;
   -webkit-mask-repeat: no-repeat;
@@ -674,10 +674,10 @@ body.dragging-note * {
 /* Chevron marker span — uses mask-image so it inherits currentColor */
 .editor-content .tiptap ul.chevron-list .chevron-marker {
   display: block;
-  flex: 0 0 28px;
-  width: 28px;
-  min-width: 28px;
-  height: 1em;
+  flex: 0 0 20px;
+  width: 20px;
+  min-width: 20px;
+  height: 0.75em;
   color: #a6acb9;
   background-color: currentColor;
   -webkit-mask-repeat: no-repeat;
@@ -685,7 +685,7 @@ body.dragging-note * {
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   margin-top: 0.375em;
-  margin-right: 4px;
+  margin-right: 2px;
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
@@ -703,9 +703,9 @@ body.dragging-note * {
 /* levels 2 and 3 use the wider 40×16 viewBox — match arrow-marker width */
 .editor-content .tiptap ul.chevron-list li[data-level="2"] .chevron-marker,
 .editor-content .tiptap ul.chevron-list li[data-level="3"] .chevron-marker {
-  flex: 0 0 33px;
-  width: 33px;
-  min-width: 33px;
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
 }
 
 /* level 2: full right-facing arrow (shaft + open chevron head) — same shape as inline >> arrow */
