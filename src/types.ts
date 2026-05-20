@@ -5,4 +5,6 @@ export interface Note {
   created_at: string;
   updated_at: string;
   collapsed_headings?: string | null;
+  parent_id: string | null;
+  is_expanded: boolean;
 }

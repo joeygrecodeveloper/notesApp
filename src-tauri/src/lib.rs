@@ -1,6 +1,8 @@
 mod commands;
 use tauri::menu::{MenuItem, MenuItemKind};
 use tauri::Emitter;
+use tauri::Manager;
+use sqlx::SqlitePool;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -36,10 +38,35 @@ pub fn run() {
             sql: "ALTER TABLE notes ADD COLUMN collapsed_headings TEXT DEFAULT NULL",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "add_folder_columns",
+            sql: "ALTER TABLE notes ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES notes(id); ALTER TABLE notes ADD COLUMN is_expanded INTEGER NOT NULL DEFAULT 1",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 6,
+            description: "add_is_expanded_noop",
+            sql: "SELECT 1",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 7,
+            description: "create_settings_table",
+            sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
         .setup(|app| {
+            let db_dir = app.path().app_local_data_dir()?;
+            std::fs::create_dir_all(&db_dir)?;
+            let db_url = format!("sqlite:{}", db_dir.join("notes.db").display());
+            let pool = tauri::async_runtime::block_on(SqlitePool::connect(&db_url))
+                .map_err(|e| e.to_string())?;
+            app.manage(pool);
+
             let rich_paste = MenuItem::with_id(app, "rich_paste", "Rich Paste", true, Some("CmdOrCtrl+Alt+Shift+V"))?;
             if let Some(menu) = app.menu() {
                 for item in menu.items()? {
@@ -64,7 +91,12 @@ pub fn run() {
                 .add_migrations("sqlite:notes.db", migrations)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![commands::fetch_url_metadata])
+        .invoke_handler(tauri::generate_handler![
+            commands::fetch_url_metadata,
+            commands::update_note_expanded,
+            commands::save_setting,
+            commands::get_setting,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

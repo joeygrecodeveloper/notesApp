@@ -394,6 +394,7 @@ export function Editor({ note, autoFocus, onTitleChange, onSave, onCollapsedHead
   useEffect(() => {
     if (note.title !== title) {
       setTitle(note.title);
+      titleRef.current = note.title;
     }
   }, [note.title]);
 

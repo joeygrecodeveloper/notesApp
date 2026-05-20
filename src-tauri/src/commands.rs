@@ -1,4 +1,5 @@
 use serde::Serialize;
+use sqlx::SqlitePool;
 
 #[derive(Serialize)]
 pub struct UrlMetadata {
@@ -22,6 +23,51 @@ fn domain_from_url(url: &str) -> String {
         .or_else(|| url.strip_prefix("http://"))
         .unwrap_or(url);
     rest.split('/').next().unwrap_or(rest).to_string()
+}
+
+#[tauri::command]
+pub async fn update_note_expanded(
+    id: String,
+    is_expanded: bool,
+    db: tauri::State<'_, SqlitePool>,
+) -> Result<(), String> {
+    sqlx::query("UPDATE notes SET is_expanded = ? WHERE id = ?")
+        .bind(is_expanded)
+        .bind(&id)
+        .execute(db.inner())
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_setting(
+    key: String,
+    value: String,
+    db: tauri::State<'_, SqlitePool>,
+) -> Result<(), String> {
+    sqlx::query(
+        "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    )
+    .bind(&key)
+    .bind(&value)
+    .execute(db.inner())
+    .await
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_setting(
+    key: String,
+    db: tauri::State<'_, SqlitePool>,
+) -> Result<Option<String>, String> {
+    let row: Option<(String,)> = sqlx::query_as("SELECT value FROM settings WHERE key = ?")
+        .bind(&key)
+        .fetch_optional(db.inner())
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(row.map(|(v,)| v))
 }
 
 #[tauri::command]
