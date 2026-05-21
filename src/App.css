@@ -72,11 +72,6 @@ html, body, #root {
   height: 28px;
   z-index: 9999;
   background: transparent;
-  cursor: grab;
-}
-
-.titlebar-drag-region:active {
-  cursor: grabbing;
 }
 
 .titlebar-drag-region * {

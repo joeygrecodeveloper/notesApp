@@ -571,7 +571,7 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        notesApp{import.meta.env.DEV && <span className="dev-badge"> - dev</span>}
+        <span className="sidebar-title">notesApp</span>{import.meta.env.DEV && <span className="dev-badge"> - dev</span>}
       </div>
       <div className="sidebar-list" ref={listRef}>
         {flatList.map(({ note, isChild, hasChildren }, index) => (
