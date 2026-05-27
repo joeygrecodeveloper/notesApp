@@ -2,6 +2,7 @@ mod commands;
 use tauri::menu::{MenuItem, MenuItemKind};
 use tauri::Emitter;
 use tauri::Manager;
+use sqlx::Executor;
 use sqlx::SqlitePool;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -59,12 +60,39 @@ pub fn run() {
     ];
 
     tauri::Builder::default()
-        .setup(|app| {
+        .setup(move |app| {
             let db_dir = app.path().app_local_data_dir()?;
             std::fs::create_dir_all(&db_dir)?;
             let db_url = format!("sqlite:{}", db_dir.join("notes.db").display());
-            let pool = tauri::async_runtime::block_on(SqlitePool::connect(&db_url))
-                .map_err(|e| e.to_string())?;
+            let pool = tauri::async_runtime::block_on(async {
+                let pool = SqlitePool::connect(&db_url).await?;
+
+                sqlx::query(
+                    "CREATE TABLE IF NOT EXISTS _migrations (version INTEGER PRIMARY KEY)"
+                )
+                .execute(&pool)
+                .await?;
+
+                for migration in &migrations {
+                    let exists: bool = sqlx::query_scalar(
+                        "SELECT EXISTS(SELECT 1 FROM _migrations WHERE version = ?)"
+                    )
+                    .bind(migration.version)
+                    .fetch_one(&pool)
+                    .await?;
+
+                    if !exists {
+                        pool.execute(migration.sql).await?;
+                        sqlx::query("INSERT INTO _migrations (version) VALUES (?)")
+                            .bind(migration.version)
+                            .execute(&pool)
+                            .await?;
+                    }
+                }
+
+                Ok::<SqlitePool, sqlx::Error>(pool)
+            })
+            .map_err(|e| e.to_string())?;
             app.manage(pool);
 
             let rich_paste = MenuItem::with_id(app, "rich_paste", "Rich Paste", true, Some("CmdOrCtrl+Alt+Shift+V"))?;
@@ -86,11 +114,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(
-            tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:notes.db", migrations)
-                .build(),
-        )
+        .plugin(tauri_plugin_sql::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             commands::fetch_url_metadata,
             commands::update_note_expanded,
