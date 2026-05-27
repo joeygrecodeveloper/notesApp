@@ -43,6 +43,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Disable Rust linker signing (macOS)
+        if: matrix.platform.os == 'macos-latest'
+        run: |
+          mkdir -p .cargo
+          echo '[target.aarch64-apple-darwin]' >> .cargo/config.toml
+          echo 'rustflags = ["-C", "link-arg=-Wl,-no_adhoc_codesign"]' >> .cargo/config.toml
+          echo '[target.x86_64-apple-darwin]' >> .cargo/config.toml
+          echo 'rustflags = ["-C", "link-arg=-Wl,-no_adhoc_codesign"]' >> .cargo/config.toml
+
       - name: Install frontend dependencies
         run: npm install
 
