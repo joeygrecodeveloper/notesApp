@@ -41,8 +41,14 @@ pub fn run() {
         },
         Migration {
             version: 5,
-            description: "add_folder_columns",
-            sql: "ALTER TABLE notes ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES notes(id); ALTER TABLE notes ADD COLUMN is_expanded INTEGER NOT NULL DEFAULT 1",
+            description: "add_parent_id_column",
+            sql: "ALTER TABLE notes ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES notes(id)",
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 8,
+            description: "add_is_expanded_column",
+            sql: "ALTER TABLE notes ADD COLUMN is_expanded INTEGER NOT NULL DEFAULT 1",
             kind: MigrationKind::Up,
         },
         Migration {
