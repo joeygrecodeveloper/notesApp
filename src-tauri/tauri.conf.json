@@ -36,5 +36,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/joeygrecodeveloper/notesApp/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQwQzdCOTVCNEM1Q0ExRTQKUldUa29WeE1XN25IMEpERXRNb1ZsVE94UmtLV1Q0eWxhcG11bFBUckRZRUo4amd1NndIaUY0SEwK"
+    }
   }
 }
