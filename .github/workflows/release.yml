@@ -9,6 +9,7 @@ jobs:
   release:
     permissions:
       contents: write
+      actions: read
     strategy:
       fail-fast: false
       matrix:
