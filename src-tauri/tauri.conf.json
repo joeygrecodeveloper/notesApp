@@ -10,7 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": false,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "",
@@ -19,7 +19,7 @@
         "decorations": true,
         "titleBarStyle": "Overlay",
         "trafficLightPosition": { "x": 12, "y": 14 },
-        "transparent": false
+        "transparent": true
       }
     ],
     "security": {
