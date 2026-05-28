@@ -64,4 +64,5 @@ jobs:
           releaseName: 'notesApp ${{ github.ref_name }}'
           releaseDraft: true
           prerelease: false
+          includeUpdaterJson: true
           args: --target ${{ matrix.platform.target }}
