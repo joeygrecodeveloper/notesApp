@@ -68,8 +68,10 @@ pub fn run() {
     tauri::Builder::default()
         .setup(move |app| {
             let db_dir = app.path().app_local_data_dir()?;
-            std::fs::create_dir_all(&db_dir)?;
-            let db_url = format!("sqlite:{}", db_dir.join("notes.db").display());
+            std::fs::create_dir_all(&db_dir).map_err(|e| format!("Failed to create db dir {:?}: {}", db_dir, e))?;
+            let db_path = db_dir.join("notes.db");
+            let db_url = format!("sqlite://{}?mode=rwc", db_path.display());
+            eprintln!("DB path: {}", db_url);
             let pool = tauri::async_runtime::block_on(async {
                 let pool = SqlitePool::connect(&db_url).await?;
 
