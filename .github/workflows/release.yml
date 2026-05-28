@@ -65,4 +65,5 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
+          uploadPlainBinary: true
           args: --target ${{ matrix.platform.target }}
