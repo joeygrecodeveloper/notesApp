@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { getAllNotes, createNote, updateNote, deleteNote, reorderNotes, nestNote, unnestNote, updateNoteExpanded, saveSetting, getSetting } from './db';
@@ -40,6 +42,21 @@ function App() {
         }
       })
       .catch(err => console.error('Failed to load notes:', err));
+  }, []);
+
+  useEffect(() => {
+    async function checkForUpdates() {
+      try {
+        const update = await check();
+        if (update?.available) {
+          await update.downloadAndInstall();
+          await relaunch();
+        }
+      } catch (e) {
+        console.error('Update check failed:', e);
+      }
+    }
+    checkForUpdates();
   }, []);
 
   useEffect(() => {
