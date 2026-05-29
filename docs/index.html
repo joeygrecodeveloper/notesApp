@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A fast, local-first note-taking app for macOS" />
+  <title>notesApp — Fast, local-first notes for macOS</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --background:       hsl(210, 15%, 22%);
+      --background-light: hsl(210, 13%, 28%);
+      --foreground:       hsl(219, 28%, 88%);
+      --accent:           hsl(210, 60%, 60%);
+      --selection:        hsla(210, 13%, 40%, 0.7);
+      --text-muted:       hsl(221, 12%, 69%);
+      --text-orange:      hsl(32, 93%, 66%);
+      --text-green:       hsl(114, 31%, 68%);
+      --text-pink:        hsl(300, 30%, 68%);
+      --text-red:         hsl(357, 79%, 65%);
+      --text-teal:        hsl(180, 36%, 54%);
+      --caret:            #F9AE58;
+
+      /* layout aliases */
+      --bg:             var(--background);
+      --surface:        var(--background-light);
+      --border:         var(--selection);
+      --text-primary:   var(--foreground);
+      --text-secondary: var(--text-muted);
+      --accent-hover:   hsl(210, 60%, 70%);
+      --accent-dim:     hsla(210, 60%, 60%, 0.12);
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .wordmark {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .wordmark span {
+      color: var(--text-orange);
+    }
+
+    header nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.15s ease;
+    }
+
+    header nav a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Hero ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+    }
+
+    .hero {
+      max-width: 620px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(48px, 8vw, 72px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    h1 .accent {
+      color: var(--text-orange);
+    }
+
+    .tagline {
+      font-size: clamp(16px, 2.5vw, 19px);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-weight: 400;
+    }
+
+    /* ── Buttons ── */
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary svg {
+      flex-shrink: 0;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn-secondary:hover {
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary:active {
+      transform: translateY(0);
+    }
+
+    /* ── System req note ── */
+    .requirement {
+      font-size: 13px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .requirement svg {
+      display: inline;
+      vertical-align: -2px;
+      margin-right: 4px;
+    }
+
+    /* ── Preview card ── */
+    .preview {
+      margin-top: 20px;
+      margin-bottom: 24px;
+    }
+
+    .preview img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 24px 40px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    footer a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      header { padding: 20px 20px; }
+      footer  { padding: 20px 20px; }
+      .editor-body { padding: 20px; }
+      h1 { letter-spacing: -1.5px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="wordmark" href="#">notes<span>App</span></a>
+    <nav>
+      <a href="https://github.com/joeygrecodeveloper/notesApp" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+
+      <h1>notes<span class="accent">App</span></h1>
+
+      <p class="tagline">a more verbose TextEdit</p>
+
+      <!-- App preview -->
+      <div class="preview">
+        <img src="notesApp.png" alt="notesApp interface screenshot" />
+      </div>
+
+      <div class="actions">
+        <a class="btn-primary" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M8 1v9M4.5 7 8 10.5 11.5 7M2 12.5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Download for macOS
+        </a>
+        <a class="btn-secondary" href="https://github.com/joeygrecodeveloper/notesApp" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <p class="requirement">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M5.5 13v1.5M10.5 13v1.5M3.5 14.5h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        Requires macOS 10.13 or later
+      </p>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>Built with Tauri &amp; Rust &mdash; runs entirely on your device.</p>
+    <p>
+      <a href="https://github.com/joeygrecodeveloper/notesApp" target="_blank" rel="noopener">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/joeygrecodeveloper/notesApp/releases" target="_blank" rel="noopener">Releases</a>
+    </p>
+  </footer>
+
+</body>
+</html>
