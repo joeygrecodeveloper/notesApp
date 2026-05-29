@@ -156,6 +156,89 @@
       flex-shrink: 0;
     }
 
+    /* ── Split button ── */
+    .split-btn {
+      position: relative;
+      display: inline-flex;
+      border-radius: 10px;
+    }
+
+    .btn-split-main {
+      border-radius: 10px 0 0 10px;
+      padding-right: 20px;
+    }
+
+    .split-divider {
+      width: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+    }
+
+    .btn-split-chevron {
+      border-radius: 0 10px 10px 0;
+      padding: 14px 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 600;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn-split-chevron:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-split-chevron:active {
+      transform: translateY(0);
+    }
+
+    .split-btn:hover .btn-split-main,
+    .split-btn:hover .btn-split-chevron {
+      /* individual hover states handle color; keep transform isolated */
+    }
+
+    .split-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      background: var(--background-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-width: 180px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .split-dropdown[hidden] {
+      display: none;
+    }
+
+    .split-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      color: var(--foreground);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.1s ease;
+    }
+
+    .split-dropdown-item:hover {
+      background: var(--selection);
+    }
+
+    .split-dropdown-item + .split-dropdown-item {
+      border-top: 1px solid var(--border);
+    }
+
     .btn-secondary {
       display: inline-flex;
       align-items: center;
@@ -263,12 +346,34 @@
       </div>
 
       <div class="actions">
-        <a class="btn-primary" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M8 1v9M4.5 7 8 10.5 11.5 7M2 12.5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Download for macOS
-        </a>
+        <div class="split-btn">
+          <a class="btn-primary btn-split-main" id="btn-aarch64" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" download>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M8 1v9M4.5 7 8 10.5 11.5 7M2 12.5h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Download for macOS
+          </a>
+          <span class="split-divider" aria-hidden="true"></span>
+          <button class="btn-split-chevron" id="btn-chevron" aria-haspopup="true" aria-expanded="false" aria-label="More download options">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="split-dropdown" id="split-dropdown" hidden>
+            <a class="split-dropdown-item" id="dl-intel" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" download>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 12v2M11 12v2M3 14h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              macOS (Intel)
+            </a>
+            <a class="split-dropdown-item" id="dl-windows" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" download>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M0 2.4 6.5 1.6v6.4H0V2.4zm7.5-1L16 .5V8H7.5V1.4zM0 8.8h6.5V15.2L0 14.4V8.8zm7.5 0H16v7L7.5 14.8V8.8z"/></svg>
+              Windows
+            </a>
+            <a class="split-dropdown-item" id="dl-linux" href="https://github.com/joeygrecodeveloper/notesApp/releases/latest" download>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 8 2zm0 2a4 4 0 1 0 0 8A4 4 0 0 0 8 4zm0 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg>
+              Linux
+            </a>
+          </div>
+        </div>
         <a class="btn-secondary" href="https://github.com/joeygrecodeveloper/notesApp" target="_blank" rel="noopener">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
@@ -297,5 +402,56 @@
     </p>
   </footer>
 
+  <script>
+    (async () => {
+      const API = 'https://api.github.com/repos/joeygrecodeveloper/notesApp/releases/latest';
+
+      try {
+        const data = await fetch(API).then(r => r.json());
+        const assets = data.assets || [];
+        const find = pred => (assets.find(pred) || {}).browser_download_url || null;
+
+        const urls = {
+          aarch64: find(a => a.name.includes('aarch64') && a.name.endsWith('.dmg')),
+          x64:     find(a => a.name.includes('x64') && a.name.endsWith('.dmg')),
+          windows: find(a => a.name.endsWith('x64-setup.exe')),
+          linux:   find(a => a.name.endsWith('.AppImage')),
+        };
+
+        [
+          ['btn-aarch64', urls.aarch64],
+          ['dl-intel',    urls.x64],
+          ['dl-windows',  urls.windows],
+          ['dl-linux',    urls.linux],
+        ].forEach(([id, url]) => {
+          if (url) document.getElementById(id).href = url;
+        });
+      } catch (_) { /* silently fall back to releases page */ }
+
+      const chevron  = document.getElementById('btn-chevron');
+      const dropdown = document.getElementById('split-dropdown');
+
+      chevron.addEventListener('click', e => {
+        e.stopPropagation();
+        const opening = dropdown.hidden;
+        dropdown.hidden = !opening;
+        chevron.setAttribute('aria-expanded', String(opening));
+      });
+
+      dropdown.querySelectorAll('.split-dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+          dropdown.hidden = true;
+          chevron.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      document.addEventListener('click', () => {
+        if (!dropdown.hidden) {
+          dropdown.hidden = true;
+          chevron.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
