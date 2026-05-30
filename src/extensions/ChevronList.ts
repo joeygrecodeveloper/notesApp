@@ -191,7 +191,7 @@ export const ChevronList = Node.create({
 
         const item         = $from.node($from.depth - 1)
         const currentLevel = (item.attrs.level as number) ?? 1
-        const nextLevel    = currentLevel === 1 ? 2 : currentLevel
+        const nextLevel    = currentLevel
 
         // Double-Enter on empty item: exit to paragraph
         if ($from.parent.content.size === 0) {
